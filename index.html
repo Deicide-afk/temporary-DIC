@@ -129,6 +129,8 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
 .btn-screenshot{width:100%;padding:16px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:12px;font-size:.95rem;font-weight:600;cursor:pointer;text-align:left;transition:background .2s;}
 .btn-screenshot:hover{background:var(--accent);border-color:var(--accent);}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -265,11 +267,19 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
   <!-- PRINT TAB -->
   <div id="tab-print" class="tab-content">
     <div style="padding:20px">
-      <div class="section-label" style="padding-left:0;margin-bottom:16px">Save as PNG</div>
-      <p style="font-size:.78rem;color:var(--muted);margin-bottom:24px;line-height:1.6">Tap a button to capture and download a PNG of that section. Make sure you've entered your counts in the DIC tab first.</p>
+      <div class="section-label" style="padding-left:0;margin-bottom:8px">Save as PNG</div>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;line-height:1.6">Captures a PNG of that section (dark theme).</p>
       <div style="display:flex;flex-direction:column;gap:14px;max-width:340px">
-        <button class="btn-screenshot" onclick="takeScreenshot('cakes')">🎂&nbsp; Save Cakes + Icing</button>
-        <button class="btn-screenshot" onclick="takeScreenshot('breads')">🍞&nbsp; Save Breads + Polvoron</button>
+        <button class="btn-screenshot" onclick="takeScreenshot('cakes')">🎂&nbsp; Save Cakes + Icing (PNG)</button>
+        <button class="btn-screenshot" onclick="takeScreenshot('breads')">🍞&nbsp; Save Breads + Polvoron (PNG)</button>
+      </div>
+
+      <div class="section-label" style="padding-left:0;margin-top:24px;margin-bottom:8px">Save as PDF</div>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;line-height:1.6">Exports a clean PDF with a white &amp; green color scheme — great for printing or sharing.</p>
+      <div style="display:flex;flex-direction:column;gap:14px;max-width:340px">
+        <button class="btn-screenshot" style="border-color:#27ae60;color:#27ae60;" onclick="savePDF('cakes')">🎂&nbsp; Save Cakes + Icing (PDF)</button>
+        <button class="btn-screenshot" style="border-color:#27ae60;color:#27ae60;" onclick="savePDF('breads')">🍞&nbsp; Save Breads + Polvoron (PDF)</button>
+        <button class="btn-screenshot" style="border-color:#27ae60;color:#27ae60;" onclick="savePDF('all')">📄&nbsp; Save All Tables (PDF)</button>
       </div>
       <div id="screenshot-status" style="margin-top:16px;font-size:.75rem;color:var(--green);min-height:20px"></div>
     </div>
@@ -426,6 +436,7 @@ const ADQ_MAP = [
   ['cm reg-chocolate mousse',     'CM REG',  1],
   ['mango blossom cake regular',  'MBC REG', 1],
   ['mochaccino delight regular',  'MDLC REG',1],
+  ['tiramisu cloud regular',      'TCC REG', 1],
   ['tmc reg-tiramisu',            'TCC REG', 1],
   ['ube bloom cake regular',      'UC REG',  1],
   ['uc reg-ube bloom',            'UC REG',  1],
@@ -440,9 +451,7 @@ const ADQ_MAP = [
   // Dedication Cakes
   ['round rainbow chocolate dedication','RDC JR',1],
   ['round rainbow dedication',    'RDC JR',  1],
-  // Dedication Cakes
-  ['round rainbow chocolate dedication','RDC JR',1],
-  ['round rainbow dedication',    'RDC JR',  1],
+  ['caramel dedication cake 8x12','CADC MED', 1],
   ['cdc 12x12',                   'CDC L',   1],
   ['cdc 8x12',                    'CDC MED', 1],
   ['round chocolate dedication',  'CDC JR',  1],
@@ -498,13 +507,14 @@ const ADQ_MAP = [
 const ADQ_SKIP = ['assorted cake slice','assorted ensaimada 5s','assorted mamon pack','assorted pbd','assorted pbdbox',
   'candle','topper','bottled water','gift check','food sales','handling fee','free bread','free fudgy',
   'caramel delight petite(free)','cake + butter mamon','cake,reg','cake,jr','cake,petite','cdlc reg',
-  'round rainbow','sharetreats','princess theme','rainbow dino','raisin bread'];
+  'sharetreats','princess theme','rainbow dino','raisin bread'];
 
 // ── DELIVERY MAPPING ─────────────────────────────────────────
 const DEL_MAP = [
   ['cake,dc,large,2022 chocolate,12x12,cdc',    'CDC L'],
   ['cake,dc,med,2022 chocolate,8x12,cdc',       'CDC MED'],
   ['cake,dc,med,2023 mocha,8x12,mdc',           'MDC MED'],
+  ['cake,dc,medium,caramel,cadc,8x12,pc',       'CADC MED'],
   ['cake,dc,medium,caramel,cadc,8x12',          'CADC JR 1'],
   ['cake,dc,medium,chococaramel,schdc,8x12',    'SCHDC MED'],
   ['cake,dc,medium,caramelmocha,cmdc,8x12',     'CMDC MED'],
@@ -553,13 +563,21 @@ const DEL_MAP = [
   ['pastry,banana crunch2014',                  'BCR-S'],
   ['pastry,choco crinkles2014',                 'CRK'],
   ['pastry,macaroons2014',                      'MCRN'],
+  ['pastry,strawberry cake slice 2026',         'SCS'],
   ['pastry,strawberry cake slice',              'SCS'],
+  ['pastry,choco peanut cake slice 2026',       'CPBCS'],
   ['pastry,choco-peanut butter cake slice',     'CPBCS'],
+  ['pastry,double dutch cake slice 2026',       'DDC SLC'],
   ['pastry,double dutch cake slice new',        'DDC SLC'],
+  ['pastry,chiffon cake slice 2026',            'CCS'],
   ['pastry,chiffon cake slice new',             'CCS'],
+  ['pastry,choco cake slice 2026',              'CHCS'],
   ['pastry,choco cake slice new',               'CHCS'],
+  ['pastry,ube marble cake slice 2026',         'UMC SLC'],
   ['pastry,ube marble cake slice new',          'UMC SLC'],
+  ['pastry,mocha marble cake slice 2026',       'MMC SLC'],
   ['pastry,mocha marble cake slice new',        'MMC SLC'],
+  ['pastry,red velvet cake slice 2026',         'RVCS'],
   ['pastry,red velvet slice new',               'RVCS'],
   ['pastry,classic white bread,18pcs',          'BCR-S'],
   ['pastry,classic white bread,9pcs',           'BCRLF'],
@@ -1007,8 +1025,19 @@ function getTableData(tableId){
     const cells=[];
     const isGroup=tr.classList.contains('group-row');
     tr.querySelectorAll('th,td').forEach(cell=>{
+      let text;
+      if(cell.tagName==='TH'){
+        const clone=cell.cloneNode(true);
+        const span=clone.querySelector('span');
+        const date=span?span.textContent.trim():'';
+        if(span)span.remove();
+        const label=clone.textContent.trim().replace(/\s+/g,' ');
+        text=date?label+'\n'+date:label;
+      } else {
+        text=cell.textContent.trim().replace(/\s+/g,' ');
+      }
       cells.push({
-        text:cell.textContent.trim(),
+        text,
         bg:getComputedStyle(cell).backgroundColor,
         color:getComputedStyle(cell).color,
         isHeader:cell.tagName==='TH'
@@ -1046,13 +1075,19 @@ function drawTableToCanvas(ctx,rows,startY,colWidths,rowHeight,canvasWidth){
       ctx.font=cell.isHeader?'bold 9px Segoe UI, sans-serif':(i===0?'600 10px Segoe UI, sans-serif':'10px Segoe UI, sans-serif');
       ctx.textAlign=i===0?'left':'center';
       const textX=i===0?x+5:x+w/2;
-      // Truncate long text
-      let txt=cell.text;
-      if(ctx.measureText(txt).width>w-4){
-        while(ctx.measureText(txt+'…').width>w-4&&txt.length>1){txt=txt.slice(0,-1);}
-        txt+='…';
+      // Multi-line support (label + date for headers)
+      const lines=cell.text.split('\n');
+      if(lines.length>1){
+        lines.forEach((ln,li)=>{
+          let t=ln;
+          if(ctx.measureText(t).width>w-4){while(ctx.measureText(t+'…').width>w-4&&t.length>1)t=t.slice(0,-1);t+='…';}
+          ctx.fillText(t,textX,y+6+li*8);
+        });
+      } else {
+        let txt=cell.text;
+        if(ctx.measureText(txt).width>w-4){while(ctx.measureText(txt+'…').width>w-4&&txt.length>1){txt=txt.slice(0,-1);}txt+='…';}
+        ctx.fillText(txt,textX,y+rowHeight/2+3);
       }
-      ctx.fillText(txt,textX,y+rowHeight/2+3);
       x+=w;
     });
     y+=rowHeight;
@@ -1291,6 +1326,196 @@ function updateADS(){
   const mtd=Number(document.getElementById('s-mtd').value)||0;
   const ads=day>0&&mtd>0?Math.round(mtd/day):0;
   document.getElementById('ads-computed').textContent=ads?ads.toLocaleString():'—';
+}
+
+// ── PDF EXPORT (white & green theme) ─────────────────────────
+function savePDF(type){
+  const status=document.getElementById('screenshot-status');
+  status.textContent='Generating PDF...';
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+
+    // Colors
+    const GREEN      =[39,174,96];
+    const DARK_GREEN =[21,95,53];
+    const LIGHT_GREEN=[240,255,244];
+    const MID_GREEN  =[195,230,203];
+    const WHITE      =[255,255,255];
+    const DARK_TEXT  =[25,25,25];
+    const MUTED_TEXT =[110,110,110];
+    const BORDER     =[185,225,190];
+
+    const PAGE_W=doc.internal.pageSize.getWidth();   // 841.89
+    const PAGE_H=doc.internal.pageSize.getHeight();  // 595.28
+    const MARGIN=18;
+    const USABLE_W=PAGE_W-MARGIN*2;                  // ~805 pt
+    const HEADER_H=30;
+    const FOOTER_Y=PAGE_H-8;
+    const TABLE_START=46; // Y position where first table starts
+
+    const dateStr=document.getElementById('today-display').textContent;
+
+    // ── Column widths — must sum to USABLE_W (~806pt) to fill full page
+    // Product,Cut,ADQ,MIN,MAX, D1,D2,D3,D4,LA, VAR,TOTAL, Del,Del,Forecast
+    const COL_W={
+      0:{cellWidth:128,halign:'left',fontStyle:'bold'},
+      1:{cellWidth:35},
+      2:{cellWidth:30},
+      3:{cellWidth:30},
+      4:{cellWidth:30},
+      5:{cellWidth:60},
+      6:{cellWidth:60},
+      7:{cellWidth:60},
+      8:{cellWidth:60},
+      9:{cellWidth:60},
+      10:{cellWidth:27},
+      11:{cellWidth:38},
+      12:{cellWidth:59},
+      13:{cellWidth:59},
+      14:{cellWidth:70},
+    };
+    // Sum: 128+35+30+30+30+300+27+38+59+59+70 = 806 ✓
+
+    // ── Parse header: extract label + date as two lines ──
+    function getHeadRow(tableEl){
+      const row=[];
+      tableEl.querySelectorAll('thead tr th').forEach(th=>{
+        const clone=th.cloneNode(true);
+        const span=clone.querySelector('span');
+        const date=span?span.textContent.trim():'';
+        if(span)span.remove();
+        const label=clone.textContent.trim();
+        row.push(date?label+'\n'+date:label);
+      });
+      return row;
+    }
+
+    function getBodyRows(tableEl){
+      const rows=[];
+      tableEl.querySelectorAll('tbody tr').forEach(tr=>{
+        const isGroup=tr.classList.contains('group-row');
+        const cells=[];
+        tr.querySelectorAll('td').forEach(td=>cells.push(td.textContent.trim().replace(/\s+/g,' ')));
+        rows.push({cells,isGroup});
+      });
+      return rows;
+    }
+
+    // ── Draw the green top bar ──
+    function drawHeader(){
+      doc.setFillColor(...GREEN);
+      doc.rect(0,0,PAGE_W,HEADER_H,'F');
+      doc.setTextColor(...WHITE);
+      doc.setFontSize(11);
+      doc.setFont('helvetica','bold');
+      doc.text('RR Dashboard',MARGIN,20);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica','normal');
+      doc.text(dateStr,PAGE_W-MARGIN,20,{align:'right'});
+    }
+
+    // ── Draw footer line + timestamp ──
+    function drawFooter(pageNum){
+      doc.setDrawColor(...GREEN);
+      doc.setLineWidth(1.2);
+      doc.line(MARGIN,PAGE_H-14,PAGE_W-MARGIN,PAGE_H-14);
+      doc.setFontSize(6.5);
+      doc.setTextColor(...MUTED_TEXT);
+      doc.text(`Page ${pageNum}  •  Generated ${new Date().toLocaleString()}`,PAGE_W/2,FOOTER_Y,{align:'center'});
+    }
+
+    // ── Render one table block, returns finalY ──
+    function renderTable(tableEl,sectionLabel,startY,bodyRows){
+      // Section label above table
+      doc.setTextColor(...DARK_GREEN);
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica','bold');
+      doc.text(sectionLabel.replace(/[^\x00-\x7F]/g,'').trim(),MARGIN,startY);
+
+      const headRow=getHeadRow(tableEl);
+      let pageCount=0;
+
+      doc.autoTable({
+        startY:startY+7,
+        margin:{left:MARGIN,right:MARGIN,top:TABLE_START,bottom:20},
+        tableWidth:'wrap',
+        head:[headRow],
+        body:bodyRows.map(r=>r.cells),
+        styles:{
+          fontSize:6,
+          cellPadding:{top:1.5,right:1.5,bottom:1.5,left:1.5},
+          lineColor:BORDER,
+          lineWidth:0.3,
+          textColor:DARK_TEXT,
+          font:'helvetica',
+          overflow:'ellipsize',
+          halign:'center',
+        },
+        headStyles:{
+          fillColor:GREEN,
+          textColor:WHITE,
+          fontStyle:'bold',
+          fontSize:6,
+          halign:'center',
+          cellPadding:{top:2,right:1.5,bottom:2,left:1.5},
+        },
+        columnStyles:COL_W,
+        alternateRowStyles:{fillColor:LIGHT_GREEN},
+        rowPageBreak:'auto',
+        didParseCell:(data)=>{
+          const row=bodyRows[data.row.index];
+          if(row&&row.isGroup){
+            data.cell.styles.fillColor=MID_GREEN;
+            data.cell.styles.textColor=DARK_GREEN;
+            data.cell.styles.fontStyle='bold';
+            data.cell.styles.halign='left';
+            data.cell.styles.fontSize=6.5;
+          }
+        },
+        didDrawPage:(data)=>{
+          pageCount++;
+          // On overflow pages redraw header bar
+          if(data.pageNumber>1){
+            drawHeader();
+          }
+          drawFooter(doc.internal.getNumberOfPages());
+        },
+      });
+      return doc.lastAutoTable.finalY;
+    }
+
+    // ── Page groups: cakes=1 page, breads+polv=1 page ──
+    const pageGroups=type==='cakes'
+      ?[[{label:'CAKES + ICING',id:'cake-table'}]]
+      :type==='breads'
+      ?[[{label:'BREADS & PBDs',id:'bread-table'},{label:'POLVORON',id:'polv-table'}]]
+      :[
+          [{label:'CAKES + ICING',id:'cake-table'}],
+          [{label:'BREADS & PBDs',id:'bread-table'},{label:'POLVORON',id:'polv-table'}],
+        ];
+
+    pageGroups.forEach((group,pageIdx)=>{
+      if(pageIdx>0)doc.addPage();
+      drawHeader();
+
+      let currentY=TABLE_START;
+      group.forEach(({label,id},tIdx)=>{
+        const tableEl=document.getElementById(id);
+        if(!tableEl){status.textContent='Error: open DIC tab first.';return;}
+        if(tIdx>0)currentY+=8; // small gap between tables on same page
+        const bodyRows=getBodyRows(tableEl);
+        currentY=renderTable(tableEl,label,currentY,bodyRows)+4;
+      });
+    });
+
+    const fname=`DIC_${type}_${fmtShort(TODAY).replace('.','')}.pdf`;
+    doc.save(fname);
+    status.textContent='✓ PDF saved: '+fname;
+  } catch(e){
+    status.textContent='PDF Error: '+e.message;
+    console.error(e);
+  }
 }
 </script>
 </body>
