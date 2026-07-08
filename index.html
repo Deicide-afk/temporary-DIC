@@ -185,7 +185,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
       <div class="ps-result-info" id="ps-result-info"></div>
       <div style="overflow-x:auto">
         <table class="ps-table" id="ps-table">
-          <thead><tr><th style="text-align:left">Product</th><th>Code</th><th>Qty Sold</th><th>ADQ</th><th>MIN</th><th>MAX</th></tr></thead>
+          <thead><tr><th style="text-align:left">Product</th><th>Code</th><th>Qty Sold</th><th style='width:28px'>ADQ</th><th style='width:28px'>MIN</th><th style='width:28px'>MAX</th></tr></thead>
           <tbody id="ps-tbody"></tbody>
         </table>
       </div>
@@ -239,13 +239,47 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
 
       <div class="section-label" style="padding-left:0;margin-top:16px">MTD</div>
       <div class="sales-grid" style="margin-top:10px">
-        <div class="sales-card"><label>MTD TGT</label><input type="number" id="s-mtd-tgt" placeholder="0"/></div>
+        <div class="sales-card"><label>MTD TGT</label><input type="number" id="s-mtd-tgt" placeholder="0" oninput="updateMTD()"/></div>
         <div class="sales-card"><label>MTD LY</label><input type="number" id="s-mtd-ly" placeholder="0"/></div>
-        <div class="sales-card"><label>MTD</label><input type="number" id="s-mtd" placeholder="0"/></div>
+        <div class="sales-card"><label>MTD</label><input type="number" id="s-mtd" placeholder="0" oninput="updateMTD()"/></div>
         <div class="sales-card"><label>AC</label><input type="number" id="s-ac" placeholder="0"/></div>
         <div class="sales-card">
           <label>ADS (auto)</label>
           <div class="computed" id="ads-computed">—</div>
+        </div>
+        <div class="sales-card">
+          <label>ADS Target</label>
+          <div class="computed" id="ads-target-computed">—</div>
+        </div>
+      </div>
+
+      <!-- MTD Progress Chart -->
+      <div id="mtd-chart-wrap" style="margin-top:18px;background:var(--card);border-radius:12px;padding:14px 12px 10px;display:none">
+        <div style="font-size:.7rem;font-weight:700;color:var(--muted);letter-spacing:.06em;margin-bottom:10px">MTD PROGRESS vs TARGET</div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <canvas id="mtd-pie" width="110" height="110" style="flex-shrink:0"></canvas>
+          <div style="flex:1;min-width:0">
+            <div id="mtd-pct-label" style="font-size:1.6rem;font-weight:800;color:var(--green);line-height:1">—</div>
+            <div style="font-size:.65rem;color:var(--muted);margin-top:2px">of target reached</div>
+            <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;justify-content:space-between;font-size:.68rem">
+                <span style="color:var(--green)">&#9646; MTD Actual</span>
+                <span id="mtd-chart-actual" style="font-weight:700">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.68rem">
+                <span style="color:#555">&#9646; Remaining</span>
+                <span id="mtd-chart-remain" style="font-weight:700">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.68rem;margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,.08)">
+                <span style="color:var(--muted)">Days left in month</span>
+                <span id="mtd-days-left" style="font-weight:700">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.68rem">
+                <span style="color:var(--muted)">Need per day (ADS tgt)</span>
+                <span id="mtd-need-per-day" style="font-weight:700;color:#f39c12">—</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -349,6 +383,7 @@ const BREAD_DAYS = [
 const CAKE_PRODUCTS = [
   {group:'JUNIOR'},
   {code:'BF JR',   cutoff:'-3 days'},{code:'CBC JR',  cutoff:'-3 days'},
+  {code:'CM JR',   cutoff:'-3 days'},
   {code:'UC JR',   cutoff:'-3 days'},{code:'MBC JR',  cutoff:'-3 days'},
   {code:'TCC JR',  cutoff:'-3 days'},
   {group:'PETITE'},
@@ -357,7 +392,7 @@ const CAKE_PRODUCTS = [
   {code:'MDLC PT', cutoff:'-3 days'},{code:'UC PT',   cutoff:'-3 days'},
   {group:'REGULAR'},
   {code:'BF REG',  cutoff:'-3 days'},{code:'CBC REG', cutoff:'-3 days'},
-  {code:'CHBC REG',cutoff:'-3 days'},{code:'CM REG',  cutoff:'-3 days'},
+  {code:'CM REG',  cutoff:'-3 days'},
   {code:'MBC REG', cutoff:'-3 days'},{code:'MDLC REG',cutoff:'-3 days'},
   {code:'TCC REG', cutoff:'-3 days'},{code:'UC REG',  cutoff:'-3 days'},
   {group:'ROLLS'},
@@ -420,6 +455,8 @@ const ADQ_MAP = [
   ['ube bloom cake junior',       'UC JR',   1],
   ['mango blossom cake junior',   'MBC JR',  1],
   ['tiramisu cloud junior',       'TCC JR',  1],
+  ['cm jr-chocolate mousse',      'CM JR',   1],
+  ['chocolate mousse junior',     'CM JR',   1],
   // Cakes Petite
   ['black forest petite',         'BF PT',   1],
   ['chocolate bliss petite',      'CBC PT',  1],
@@ -432,7 +469,6 @@ const ADQ_MAP = [
   // Cakes Regular
   ['black forest regular',        'BF REG',  1],
   ['chocolate bliss regular',     'CBC REG', 1],
-  ['chocolate hazelnut bliss',    'CHBC REG',1],
   ['cm reg-chocolate mousse',     'CM REG',  1],
   ['mango blossom cake regular',  'MBC REG', 1],
   ['mochaccino delight regular',  'MDLC REG',1],
@@ -531,12 +567,12 @@ const DEL_MAP = [
   ['cake,reg,choco mousse',                     'CM REG'],
   ['cake,reg,mango blossom',                    'MBC REG'],
   ['cake,reg,mochaccino delight',               'MDLC REG'],
-  ['cake,reg,chocolate hazelnut',               'CHBC REG'],
   ['cake,jr,black forest',                      'BF JR'],
   ['cake,jr,chocolate cake',                    'CBC JR'],
   ['cake,jr,ube bloom cake 2026',               'UC JR'],
   ['cake,jr,mango blossom',                     'MBC JR'],
   ['cake,jr,tiramisu cloud cake',               'TCC JR'],
+  ['cake,jr,choco mousse 2017',                 'CM JR'],
   ['cake,petite,black forest',                  'BF PT'],
   ['cake,petite,chocolate bliss',               'CBC PT'],
   ['cake,petite,mango blossom',                 'MBC PT'],
@@ -1295,9 +1331,10 @@ function loadSales(){
       const key='mtd_'+f;
       if(el&&all[key]!==undefined)el.value=all[key];
     });
-    updateADS();
-    // Auto-update ADS when MTD changes
-    document.getElementById('s-mtd').addEventListener('input',updateADS);
+    updateMTD();
+    // Auto-update when MTD or TGT changes
+    document.getElementById('s-mtd').addEventListener('input',updateMTD);
+    document.getElementById('s-mtd-tgt').addEventListener('input',updateMTD);
   }catch(e){}
 }
 
@@ -1321,11 +1358,65 @@ function saveSales(){
   }catch(e){}
 }
 
-function updateADS(){
-  const day=TODAY.getDate();
-  const mtd=Number(document.getElementById('s-mtd').value)||0;
-  const ads=day>0&&mtd>0?Math.round(mtd/day):0;
-  document.getElementById('ads-computed').textContent=ads?ads.toLocaleString():'—';
+function updateADS(){ updateMTD(); } // legacy alias
+
+function daysInMonth(d){ return new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); }
+
+function updateMTD(){
+  const day   = TODAY.getDate();
+  const total = daysInMonth(TODAY);
+  const left  = total - day;            // days remaining after today
+  const mtd   = Number(document.getElementById('s-mtd').value)||0;
+  const tgt   = Number(document.getElementById('s-mtd-tgt').value)||0;
+
+  // ADS (actual)
+  const ads = day>0&&mtd>0 ? Math.round(mtd/day) : 0;
+  document.getElementById('ads-computed').textContent = ads ? ads.toLocaleString() : '—';
+
+  // ADS Target = (MTD TGT - MTD) / days left
+  const adsTarget = left>0&&tgt>0 ? Math.round((tgt-mtd)/left) : 0;
+  const adsTEl = document.getElementById('ads-target-computed');
+  if(tgt>0&&left>0){
+    adsTEl.textContent = adsTarget>0 ? adsTarget.toLocaleString() : (mtd>=tgt?'✓ Hit!':'—');
+    adsTEl.style.color = adsTarget<=ads ? 'var(--green)' : '#f39c12';
+  } else {
+    adsTEl.textContent = '—';
+    adsTEl.style.color = '';
+  }
+
+  // Pie chart
+  const wrap = document.getElementById('mtd-chart-wrap');
+  if(!mtd||!tgt){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+
+  const pct = Math.min(mtd/tgt,1);
+  const remain = Math.max(tgt-mtd,0);
+
+  document.getElementById('mtd-pct-label').textContent = Math.round(pct*100)+'%';
+  document.getElementById('mtd-chart-actual').textContent = mtd.toLocaleString();
+  document.getElementById('mtd-chart-remain').textContent = remain>0 ? remain.toLocaleString() : '✓ Achieved';
+  document.getElementById('mtd-days-left').textContent = left+' / '+total+' days';
+  document.getElementById('mtd-need-per-day').textContent = adsTarget>0 ? adsTarget.toLocaleString()+'/day' : (mtd>=tgt?'✓ Hit!':'—');
+
+  // Draw donut
+  const canvas = document.getElementById('mtd-pie');
+  const ctx = canvas.getContext('2d');
+  const cx=55,cy=55,r=44,lw=14;
+  ctx.clearRect(0,0,110,110);
+  // BG ring
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=lw; ctx.stroke();
+  // Progress arc
+  const startAngle=-Math.PI/2;
+  const endAngle=startAngle+pct*Math.PI*2;
+  ctx.beginPath(); ctx.arc(cx,cy,r,startAngle,endAngle);
+  ctx.strokeStyle=pct>=1?'#2ecc71':'#27ae60';
+  ctx.lineWidth=lw; ctx.lineCap='round'; ctx.stroke();
+  // Center text
+  ctx.fillStyle='var(--fg,#f0f0f0)';
+  ctx.font='bold 13px Segoe UI,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(Math.round(pct*100)+'%',cx,cy);
 }
 
 // ── PDF EXPORT (white & green theme) ─────────────────────────
