@@ -513,9 +513,12 @@ const ADQ_MAP = [
   ['butter mamon(2014) pack 10s', 'BM',      10],
   ['butter mamon pack 5s',        'BM',      5],
   ['butter mamon(2014)',          'BM',      1],
+  ['butter mamon(2014)(mc)',      'BM',      1],
+  ['butter mamon(free)',          'BM',      1],
   ['choco cake slice 2024',       'CHCS',    1],
   ['cheesy mamon(2019)',          'CHM',     1],
   ['choco peanut butter cake slice','CPBCS', 1],
+  ['choco peanut cake slice',       'CPBCS', 1],
   ['choco crinkles(2014)',        'CRK',     1],
   ['double dutch cake slice',     'DDC SLC', 1],
   ['ensaimada pack 8s',           'ENS',     8],
@@ -536,6 +539,21 @@ const ADQ_MAP = [
   ['ube marble cake slice',       'UMC SLC', 1],
   ['ube ensaimada',               'UBENS',   1],
   ['chiffon cake slice',          'CCS',     1],
+  ['chiffon cake slice 2026',     'CCS',     1],
+  ['choco cake slice 2026',       'CHCS',    1],
+  ['double dutch cake slice 2026','DDC SLC', 1],
+  ['mocha marble cake slice 2026','MMC SLC', 1],
+  ['red velvet cake slice 2026',  'RVCS',    1],
+  ['red velvet slice new',        'RVCS',    1],
+  ['strawberry cake slice 2026',  'SCS',     1],
+  ['ube marble cake slice 2026',  'UMC SLC', 1],
+  ['ube marble cake slice 2024',  'UMC SLC', 1],
+  ['mocha marble cake slice 2024','MMC SLC', 1],
+  ['red velvet cake slice 2025',  'RVCS',    1],
+  ['strawberry cake slice 2025',  'SCS',     1],
+  ['double dutch cake slice 2024','DDC SLC', 1],
+  ['choco cake slice 2024',       'CHCS',    1],
+  ['chiffon cake slice 2024',     'CCS',     1],
   ['fudgy brownies',              'FB',      1],
   // Polvoron
   ['peanut polvoron 8s',          'PVNPE 8', 1],
@@ -545,11 +563,11 @@ const ADQ_MAP = [
   ['polvoron assorted 15s',       'PVNASTD15',1],
   ['polvoron assorted 22s',       'PVNASTD22',1],
   // Accessories
-  ['butter puto luzon pack 10s',  'BUTTER PUTO',10],
+  ['butter puto luzon pack 10s',  'BUTTER PUTO',1],
 ];
 
 // Skip these keywords entirely
-const ADQ_SKIP = ['assorted cake slice','assorted ensaimada 5s','assorted mamon pack','assorted pbd','assorted pbdbox',
+const ADQ_SKIP = ['assorted','assorted cake slice','assorted ensaimada 5s','assorted mamon pack','assorted pbd','assorted pbdbox',
   'candle','topper','bottled water','gift check','food sales','handling fee','free bread','free fudgy',
   'caramel delight petite(free)','cake + butter mamon','cake,reg','cake,jr','cake,petite','cdlc reg',
   'sharetreats','princess theme','rainbow dino','raisin bread'];
@@ -1409,36 +1427,53 @@ function calcADQ(){
   if(!raw.trim()){document.getElementById('ps-result-info').textContent='Nothing to parse.';return;}
   const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
   const totals={};
+  const debugLines=[];
 
   lines.forEach(line=>{
     const parts=line.split('\t');
-    if(parts.length<3)return;
+    const isPeanut=line.toLowerCase().includes('peanut');
+    if(isPeanut) debugLines.push(`COLS:${parts.length} | P0:"${parts[0]?.trim().substring(0,35)}" | P1:"${parts[1]}" | P2:"${parts[2]}"`);
+
+    if(parts.length<3){if(isPeanut)debugLines.push('→ SKIP: <3 cols');return;}
     const name=parts[0].trim();
     const qtyStr=parts[1]||parts[2]||'';
     const qty=parseInt(qtyStr.replace(/,/g,''));
-    if(isNaN(qty)||qty===0)return;
+    if(isNaN(qty)||qty===0){if(isPeanut)debugLines.push('→ SKIP: qty='+qtyStr);return;}
     const lower=name.toLowerCase();
-    // Skip?
-    if(ADQ_SKIP.some(s=>lower.includes(s)))return;
-    // Category row check (no number in col 1 position)
-    if(parts.length===6&&isNaN(parseInt(parts[1])))return;
+    if(ADQ_SKIP.some(s=>lower.includes(s))){if(isPeanut)debugLines.push('→ SKIP: ADQ_SKIP matched');return;}
+    if(parts.length===6&&isNaN(parseInt(parts[1]))){if(isPeanut)debugLines.push('→ SKIP: cat-row filter');return;}
 
-    // Find mapping
+    let matched=false;
     for(const[kw,code,pack] of ADQ_MAP){
       if(pack===0)continue;
       if(lower.includes(kw.toLowerCase())){
         if(!totals[code])totals[code]=0;
         totals[code]+=qty*(pack||1);
+        if(isPeanut)debugLines.push(`→ MATCH: kw="${kw}" → ${code} qty=${qty}×${pack||1}=${qty*(pack||1)}`);
+        matched=true;
         return;
       }
     }
+    if(isPeanut&&!matched)debugLines.push('→ NO MATCH in ADQ_MAP');
   });
+
+  if(debugLines.length){
+    console.group('CPBCS Debug');
+    debugLines.forEach(d=>console.log(d));
+    console.groupEnd();
+    document.getElementById('ps-result-info').textContent='⚠ Check console (F12) for CPBCS debug';
+  }
 
   // Build adqData
   adqData={};
   Object.entries(totals).forEach(([code,qty])=>{
     const adq=qty/15;
-    adqData[code]={qty,adq,min:adq*1.2,max:adq*1.5};
+    const BEST_SELLERS=['BF JR','BF PT','BF REG','CBC JR','CBC PT','CBC REG',
+      'CRL','TCRL F','TCRL H','CDC JR','CDC MED','CDC L',
+      'ENS','BM','CHCS','DDC SLC'];
+    const isBest=BEST_SELLERS.includes(code);
+    const minM=isBest?1.5:1.2, maxM=isBest?1.7:1.5;
+    adqData[code]={qty,adq,min:adq*minM,max:adq*maxM};
   });
 
   saveADQStorage();
