@@ -238,8 +238,8 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
         <div class="sales-card"><label>TC</label><input type="number" id="s-tc" placeholder="0"/></div>
         <div class="sales-card"><label>Waste</label><input type="number" id="s-waste" placeholder="0"/></div>
         <div class="sales-card"><label>Discount</label><input type="number" id="s-discount" placeholder="0"/></div>
-        <div class="sales-card"><label>Grab</label><input type="number" id="s-grab" placeholder="0"/></div>
-        <div class="sales-card"><label>FPanda</label><input type="number" id="s-fpanda" placeholder="0"/></div>
+        <div class="sales-card"><label>MTD Waste</label><input type="number" id="s-grab" placeholder="0"/></div>
+        <div class="sales-card"><label>MTD Discount</label><input type="number" id="s-fpanda" placeholder="0"/></div>
       </div>
       <button class="btn-save-sales" onclick="saveSales()">Save Today's Sales</button>
       <p class="sales-note" id="sales-save-note"></p>
@@ -517,8 +517,8 @@ const ADQ_MAP = [
   ['butter mamon(free)',          'BM',      1],
   ['choco cake slice 2024',       'CHCS',    1],
   ['cheesy mamon(2019)',          'CHM',     1],
-  ['choco peanut butter cake slice','CPBCS', 1],
-  ['choco peanut cake slice',       'CPBCS', 1],
+  ['peanut butter cake slice',      'CPBCS', 1],
+  ['peanut cake slice',             'CPBCS', 1],
   ['choco crinkles(2014)',        'CRK',     1],
   ['double dutch cake slice',     'DDC SLC', 1],
   ['ensaimada pack 8s',           'ENS',     8],
@@ -1201,7 +1201,7 @@ function takeScreenshot(type){
       const fields=[
         {label:'Sales',    id:'s-sales'},{label:'TC',      id:'s-tc'},
         {label:'Waste',    id:'s-waste'},{label:'Discount',id:'s-discount'},
-        {label:'Grab',     id:'s-grab'},{label:'FPanda',   id:'s-fpanda'},
+        {label:'MTD Waste', id:'s-grab'},{label:'MTD Discount',id:'s-fpanda'},
         {label:'MTD TGT', id:'s-mtd-tgt'},{label:'MTD LY',id:'s-mtd-ly'},
         {label:'MTD',      id:'s-mtd'},{label:'AC',        id:'s-ac'},
         {label:'ADS',      id:'ads-computed'},{label:'ADS Target',id:'ads-target-computed'},
@@ -1439,7 +1439,17 @@ function calcADQ(){
     const qtyStr=parts[1]||parts[2]||'';
     const qty=parseInt(qtyStr.replace(/,/g,''));
     if(isNaN(qty)||qty===0){if(isPeanut)debugLines.push('→ SKIP: qty='+qtyStr);return;}
-    const lower=name.toLowerCase();
+    // Normalize: replace non-breaking spaces, en-dash, em-dash with standard chars
+    const lower=name.toLowerCase()
+      .replace(/\u00a0/g,' ')
+      .replace(/\u2013/g,'-')
+      .replace(/\u2014/g,'-')
+      .replace(/\s+/g,' ');
+    if(isPeanut){
+      const codes=[...name].slice(0,20).map(c=>c.charCodeAt(0).toString(16)).join(',');
+      debugLines.push(`→ CHARS: ${codes}`);
+      debugLines.push(`→ LOWER: "${lower.substring(0,40)}"`);
+    }
     if(ADQ_SKIP.some(s=>lower.includes(s))){if(isPeanut)debugLines.push('→ SKIP: ADQ_SKIP matched');return;}
     if(parts.length===6&&isNaN(parseInt(parts[1]))){if(isPeanut)debugLines.push('→ SKIP: cat-row filter');return;}
 
@@ -1826,8 +1836,8 @@ function saveSalesPDF(){
       ['TC',       document.getElementById('s-tc').value],
       ['Waste',    document.getElementById('s-waste').value],
       ['Discount', document.getElementById('s-discount').value],
-      ['Grab',     document.getElementById('s-grab').value],
-      ['FPanda',   document.getElementById('s-fpanda').value],
+      ['MTD Waste',  document.getElementById('s-grab').value],
+      ['MTD Discount',document.getElementById('s-fpanda').value],
       ['MTD TGT',  document.getElementById('s-mtd-tgt').value],
       ['MTD LY',   document.getElementById('s-mtd-ly').value],
       ['MTD',      document.getElementById('s-mtd').value],
