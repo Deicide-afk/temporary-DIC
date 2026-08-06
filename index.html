@@ -1389,10 +1389,21 @@ function extractDel(slot){
   lines.forEach(line=>{
     const parts=line.split('\t');
     if(parts.length<4)return;
-    const name=parts[0].trim();
-    const qty=parseInt(parts[3].replace(/,/g,''));
-    if(isNaN(qty))return;
-    const lower=name.toLowerCase();
+
+    // Detect format: new format has numeric product code in parts[0]
+    // New: [code, name, unit, category, qty, price1, price2]
+    // Old: [name, unit, category, qty, ...]
+    const isNewFmt = /^\d{10}$/.test(parts[0].trim());
+    const name = isNewFmt ? parts[1].trim() : parts[0].trim();
+    const qtyCol = isNewFmt ? 4 : 3;
+    const qty=parseInt((parts[qtyCol]||'').replace(/,/g,''));
+    if(isNaN(qty)||qty===0)return;
+
+    const lower=name.toLowerCase()
+      .replace(/\u00a0/g,' ')
+      .replace(/\u2013/g,'-')
+      .replace(/\u2014/g,'-')
+      .replace(/\s+/g,' ');
     let found=null;
     for(const[kw,code] of DEL_MAP){if(lower.includes(kw.toLowerCase())){found=code;break;}}
     if(found){
@@ -1427,52 +1438,30 @@ function calcADQ(){
   if(!raw.trim()){document.getElementById('ps-result-info').textContent='Nothing to parse.';return;}
   const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
   const totals={};
-  const debugLines=[];
 
   lines.forEach(line=>{
     const parts=line.split('\t');
-    const isPeanut=line.toLowerCase().includes('peanut');
-    if(isPeanut) debugLines.push(`COLS:${parts.length} | P0:"${parts[0]?.trim().substring(0,35)}" | P1:"${parts[1]}" | P2:"${parts[2]}"`);
-
-    if(parts.length<3){if(isPeanut)debugLines.push('→ SKIP: <3 cols');return;}
+    if(parts.length<3)return;
     const name=parts[0].trim();
     const qtyStr=parts[1]||parts[2]||'';
     const qty=parseInt(qtyStr.replace(/,/g,''));
-    if(isNaN(qty)||qty===0){if(isPeanut)debugLines.push('→ SKIP: qty='+qtyStr);return;}
-    // Normalize: replace non-breaking spaces, en-dash, em-dash with standard chars
+    if(isNaN(qty)||qty===0)return;
     const lower=name.toLowerCase()
       .replace(/\u00a0/g,' ')
       .replace(/\u2013/g,'-')
       .replace(/\u2014/g,'-')
       .replace(/\s+/g,' ');
-    if(isPeanut){
-      const codes=[...name].slice(0,20).map(c=>c.charCodeAt(0).toString(16)).join(',');
-      debugLines.push(`→ CHARS: ${codes}`);
-      debugLines.push(`→ LOWER: "${lower.substring(0,40)}"`);
-    }
-    if(ADQ_SKIP.some(s=>lower.includes(s))){if(isPeanut)debugLines.push('→ SKIP: ADQ_SKIP matched');return;}
-    if(parts.length===6&&isNaN(parseInt(parts[1]))){if(isPeanut)debugLines.push('→ SKIP: cat-row filter');return;}
-
-    let matched=false;
+    if(ADQ_SKIP.some(s=>lower.includes(s)))return;
+    if(parts.length===6&&isNaN(parseInt(parts[1])))return;
     for(const[kw,code,pack] of ADQ_MAP){
       if(pack===0)continue;
       if(lower.includes(kw.toLowerCase())){
         if(!totals[code])totals[code]=0;
         totals[code]+=qty*(pack||1);
-        if(isPeanut)debugLines.push(`→ MATCH: kw="${kw}" → ${code} qty=${qty}×${pack||1}=${qty*(pack||1)}`);
-        matched=true;
         return;
       }
     }
-    if(isPeanut&&!matched)debugLines.push('→ NO MATCH in ADQ_MAP');
   });
-
-  if(debugLines.length){
-    console.group('CPBCS Debug');
-    debugLines.forEach(d=>console.log(d));
-    console.groupEnd();
-    document.getElementById('ps-result-info').textContent='⚠ Check console (F12) for CPBCS debug';
-  }
 
   // Build adqData
   adqData={};
