@@ -334,6 +334,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
           <thead><tr style="background:var(--card)">
             <th style="text-align:left;min-width:70px">Product</th>
             <th style="background:#1a3a5c;color:#93c5fd;min-width:42px">Yesterday</th>
+            <th style="background:#2d2d1a;color:#fcd34d;min-width:36px">ADQ</th>
             <th style="background:#1a3a2c;color:#86efac;min-width:42px" id="ydic-del1-label">Del Tom</th>
             <th style="background:#2d1a3a;color:#c4b5fd;min-width:42px" id="ydic-del2-label">Del NND</th>
           </tr></thead>
@@ -346,6 +347,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
           <thead><tr style="background:var(--card)">
             <th style="text-align:left;min-width:70px">Product</th>
             <th style="background:#1a3a5c;color:#93c5fd;min-width:42px">Yesterday</th>
+            <th style="background:#2d2d1a;color:#fcd34d;min-width:36px">ADQ</th>
             <th style="background:#1a3a2c;color:#86efac;min-width:42px" id="ydic-del1-label2">Del Tom</th>
             <th style="background:#2d1a3a;color:#c4b5fd;min-width:42px" id="ydic-del2-label2">Del NND</th>
           </tr></thead>
@@ -358,6 +360,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
           <thead><tr style="background:var(--card)">
             <th style="text-align:left;min-width:70px">Product</th>
             <th style="background:#1a3a5c;color:#93c5fd;min-width:42px">Yesterday</th>
+            <th style="background:#2d2d1a;color:#fcd34d;min-width:36px">ADQ</th>
             <th style="background:#1a3a2c;color:#86efac;min-width:42px" id="ydic-del1-label3">Del Tom</th>
             <th style="background:#2d1a3a;color:#c4b5fd;min-width:42px" id="ydic-del2-label3">Del NND</th>
           </tr></thead>
@@ -1951,13 +1954,15 @@ function renderYDICTable(){
       const yVal=ydicData[code];
       const d1Val=delData.del1[code];
       const d2Val=delData.del2[code];
-      if(yVal===undefined&&!d1Val&&!d2Val) return;
+      if(yVal===undefined&&!d1Val&&!d2Val&&!adqData[code]) return;
       hasRow=true;
       const tr=document.createElement('tr');
       const yC=yVal!==undefined?`<td style="text-align:center;font-weight:700;color:#93c5fd">${yVal%1===0?yVal:yVal.toFixed(2)}</td>`:`<td style="text-align:center;color:var(--muted)">—</td>`;
+      const adqVal=adqData[code]?Math.round(adqData[code].adq*10)/10:null;
+      const adqC=adqVal?`<td style="text-align:center;font-weight:700;color:#fcd34d">${adqVal}</td>`:`<td style="text-align:center;color:var(--muted)">—</td>`;
       const d1C=d1Val?`<td style="text-align:center;font-weight:700;color:#86efac">${d1Val}</td>`:`<td style="text-align:center;color:var(--muted)">—</td>`;
       const d2C=d2Val?`<td style="text-align:center;font-weight:700;color:#c4b5fd">${d2Val}</td>`:`<td style="text-align:center;color:var(--muted)">—</td>`;
-      tr.innerHTML=`<td style="font-size:.72rem;padding:4px 6px;text-align:left;font-weight:600">${code}</td>${yC}${d1C}${d2C}`;
+      tr.innerHTML=`<td style="font-size:.72rem;padding:4px 6px;text-align:left;font-weight:600">${code}</td>${yC}${adqC}${d1C}${d2C}`;
       tbody.appendChild(tr);
     });
     if(!hasRow){
