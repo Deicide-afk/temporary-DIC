@@ -134,6 +134,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 
@@ -165,6 +166,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
     <button class="sub-btn" id="sub-btn-prodsold" onclick="switchTab('prodsold')">Product Sold</button>
     <button class="sub-btn" id="sub-btn-delivery" onclick="switchTab('delivery')">Delivery</button>
     <button class="sub-btn" id="sub-btn-dicsold" onclick="switchTab('dicsold')">DIC Sold</button>
+    <button class="sub-btn" id="sub-btn-ydic" onclick="switchTab('ydic')">Yesterday's DIC</button>
   </div>
 
   <!-- DIC TAB -->
@@ -302,6 +304,68 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
       <table class="dic-table"><thead id="bread-sold-thead"></thead><tbody id="bread-sold-tbody"></tbody></table>
       <div class="section-label" style="margin-top:16px">🍬 Polvoron</div>
       <table class="dic-table"><thead id="polv-sold-thead"></thead><tbody id="polv-sold-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- YESTERDAY'S DIC TAB -->
+  <div id="tab-ydic" class="tab-content">
+    <div class="dic-container">
+      <div style="padding:4px 4px 10px;font-size:.72rem;color:var(--muted);line-height:1.6">
+        Upload the Physical Count PDF to see Yesterday's ending inventory alongside your deliveries.
+      </div>
+
+      <!-- Upload area -->
+      <label id="ydic-drop" for="ydic-file" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--border);border-radius:12px;padding:22px 16px;cursor:pointer;transition:border-color .2s;margin-bottom:10px">
+        <span style="font-size:1.8rem">📄</span>
+        <span style="font-size:.8rem;font-weight:600;color:var(--accent2)">Tap to upload Physical Count PDF</span>
+        <span style="font-size:.7rem;color:var(--muted)" id="ydic-fname">No file chosen</span>
+        <input type="file" id="ydic-file" accept=".pdf" style="display:none" onchange="loadYDIC(this)"/>
+      </label>
+
+      <div id="ydic-status" style="font-size:.75rem;color:var(--muted);margin-bottom:10px;min-height:18px"></div>
+
+      <!-- DIC-style table -->
+      <div id="ydic-result" style="display:none">
+        <div style="font-size:.68rem;color:var(--muted);margin-bottom:6px" id="ydic-summary"></div>
+
+        <div class="section-label">🎂 Cakes</div>
+        <div style="overflow-x:auto">
+        <table class="dic-table" style="width:100%">
+          <thead><tr style="background:var(--card)">
+            <th style="text-align:left;min-width:70px">Product</th>
+            <th style="background:#1a3a5c;color:#93c5fd;min-width:42px">Yesterday</th>
+            <th style="background:#1a3a2c;color:#86efac;min-width:42px" id="ydic-del1-label">Del Tom</th>
+            <th style="background:#2d1a3a;color:#c4b5fd;min-width:42px" id="ydic-del2-label">Del NND</th>
+          </tr></thead>
+          <tbody id="ydic-cake-tbody"></tbody>
+        </table></div>
+
+        <div class="section-label" style="margin-top:14px">🍞 Breads & PBDs</div>
+        <div style="overflow-x:auto">
+        <table class="dic-table" style="width:100%">
+          <thead><tr style="background:var(--card)">
+            <th style="text-align:left;min-width:70px">Product</th>
+            <th style="background:#1a3a5c;color:#93c5fd;min-width:42px">Yesterday</th>
+            <th style="background:#1a3a2c;color:#86efac;min-width:42px" id="ydic-del1-label2">Del Tom</th>
+            <th style="background:#2d1a3a;color:#c4b5fd;min-width:42px" id="ydic-del2-label2">Del NND</th>
+          </tr></thead>
+          <tbody id="ydic-bread-tbody"></tbody>
+        </table></div>
+
+        <div class="section-label" style="margin-top:14px">🍬 Polvoron</div>
+        <div style="overflow-x:auto">
+        <table class="dic-table" style="width:100%">
+          <thead><tr style="background:var(--card)">
+            <th style="text-align:left;min-width:70px">Product</th>
+            <th style="background:#1a3a5c;color:#93c5fd;min-width:42px">Yesterday</th>
+            <th style="background:#1a3a2c;color:#86efac;min-width:42px" id="ydic-del1-label3">Del Tom</th>
+            <th style="background:#2d1a3a;color:#c4b5fd;min-width:42px" id="ydic-del2-label3">Del NND</th>
+          </tr></thead>
+          <tbody id="ydic-polv-tbody"></tbody>
+        </table></div>
+
+        <div id="ydic-unmatched" style="margin-top:10px;font-size:.68rem;color:var(--muted)"></div>
+      </div>
     </div>
   </div>
 
@@ -585,6 +649,9 @@ const DEL_MAP = [
   ['cake,dc,round,mocha,mdc,8dia',              'MDC JR'],
   ['cake,dc,round,caramel,cadc,8dia',           'CADC JR 1'],
   ['cake,dc,round,chococaramel,schdc,8dia',     'SCHDC JR'],
+  ['round chococaramel',                        'SCHDC JR'],
+  ['cake,dc,medium,chococaramel,schdc,8x12',    'SCHDC MED'],
+  ['medium chococaramel',                       'SCHDC MED'],
   ['cake,dc,round,caramelmocha,cmdc,8dia',      'CMDC JR'],
   ['cake,dc,round,choco rainbow',               'RDC JR'],
   ['cake,reg,black forest',                     'BF REG'],
@@ -620,6 +687,8 @@ const DEL_MAP = [
   ['pastry,mocha mamon2014',                    'MM'],
   ['pastry, taisan, slice',                     'Tai-S'],
   ['pastry,taisan loaf',                        'TAILF'],
+  ['pastry,taisan,loaf',                        'TAILF'],
+  ['taisan,loaf',                               'TAILF'],
   ['pastry, moist choco, loaf',                 'MC-L'],
   ['pastry,moist choco slice2014',              'MC-S'],
   ['pastry, banana crunch, loaf',               'BCRLF'],
@@ -651,6 +720,7 @@ const DEL_MAP = [
   ['polvoron,assorted,22pcs',                   'PVNASTD22'],
   ['polvoron,classic,10pcs',                    'PVNCL 10'],
   ['polvoron,classic,16pcs',                    'PVNCL 16'],
+  ['polvoron,clsc',                             'PVNCL 16'],
   ['polvoron,peanut',                           'PVNPE 8'],
   ['polvoron,pinipig',                          'PVNPN 8'],
   ['pastry,icing,bc, lettering,blue',           'BIL'],
@@ -678,7 +748,7 @@ function checkPw(){
 document.getElementById('pw-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkPw();});
 
 // ── TAB SWITCH ───────────────────────────────────────────────
-const DIC_SUBS=['dic','prodsold','delivery','dicsold'];
+const DIC_SUBS=['dic','prodsold','delivery','dicsold','ydic'];
 function switchMain(main){
   ['dic','sales','print'].forEach(m=>{
     document.getElementById('main-btn-'+m).classList.toggle('active',m===main);
@@ -1419,6 +1489,11 @@ function extractDel(slot){
     }
   });
   document.getElementById('result-'+slot).textContent=`✓ ${matched} matched${unmatched.length?` · ${unmatched.length} unmatched`:''}`;
+  // Refresh Yesterday's DIC view if it has been shown
+  if(document.getElementById('ydic-result').style.display!=='none'||Object.keys(delData.del1).length||Object.keys(delData.del2).length){
+    document.getElementById('ydic-result').style.display='block';
+    renderYDICTable();
+  }
 }
 
 // ── PRODUCT SOLD / ADQ ───────────────────────────────────────
@@ -1851,6 +1926,97 @@ function saveSalesPDF(){
     status.textContent='✓ Sales PDF saved';
   }catch(e){ status.textContent='PDF Error: '+e.message; console.error(e); }
 }
+// ── YESTERDAY'S DIC — PDF PARSER ─────────────────────────────
+let ydicData = {};
+
+function renderYDICTable(){
+  const fmt = dt => `${MONTHS_SHORT[dt.getMonth()]} ${dt.getDate()}`;
+  const del1Date = fmt(addDays(TODAY,1));
+  const del2Date = fmt(addDays(TODAY,2));
+  // Update all del column headers
+  document.querySelectorAll('[id^="ydic-del1-label"]').forEach(el=>el.textContent='Del '+del1Date);
+  document.querySelectorAll('[id^="ydic-del2-label"]').forEach(el=>el.textContent='Del '+del2Date);
+  const allGroups = [
+    {tbodyId:'ydic-cake-tbody',  products:(typeof CAKE_PRODUCTS!=='undefined'?CAKE_PRODUCTS:[]).filter(p=>p.code)},
+    {tbodyId:'ydic-bread-tbody', products:(typeof BREAD_PRODUCTS!=='undefined'?BREAD_PRODUCTS:[]).filter(p=>p.code)},
+    {tbodyId:'ydic-polv-tbody',  products:(typeof POLV_PRODUCTS!=='undefined'?POLV_PRODUCTS:[]).filter(p=>p.code)}
+  ];
+  allGroups.forEach(({tbodyId, products})=>{
+    const tbody=document.getElementById(tbodyId);
+    if(!tbody) return;
+    tbody.innerHTML='';
+    let hasRow=false;
+    products.forEach(p=>{
+      const code=p.code;
+      const yVal=ydicData[code];
+      const d1Val=delData.del1[code];
+      const d2Val=delData.del2[code];
+      if(yVal===undefined&&!d1Val&&!d2Val) return;
+      hasRow=true;
+      const tr=document.createElement('tr');
+      const yC=yVal!==undefined?`<td style="text-align:center;font-weight:700;color:#93c5fd">${yVal%1===0?yVal:yVal.toFixed(2)}</td>`:`<td style="text-align:center;color:var(--muted)">—</td>`;
+      const d1C=d1Val?`<td style="text-align:center;font-weight:700;color:#86efac">${d1Val}</td>`:`<td style="text-align:center;color:var(--muted)">—</td>`;
+      const d2C=d2Val?`<td style="text-align:center;font-weight:700;color:#c4b5fd">${d2Val}</td>`:`<td style="text-align:center;color:var(--muted)">—</td>`;
+      tr.innerHTML=`<td style="font-size:.72rem;padding:4px 6px;text-align:left;font-weight:600">${code}</td>${yC}${d1C}${d2C}`;
+      tbody.appendChild(tr);
+    });
+    if(!hasRow){
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td colspan="4" style="text-align:center;color:var(--muted);font-size:.7rem;padding:8px">No data yet</td>`;
+      tbody.appendChild(tr);
+    }
+  });
+}
+
+async function loadYDIC(input){
+  const file=input.files[0];
+  if(!file) return;
+  document.getElementById('ydic-fname').textContent=file.name;
+  document.getElementById('ydic-status').textContent='Reading PDF…';
+  document.getElementById('ydic-result').style.display='none';
+  ydicData={};
+  try {
+    const pdfjsLib=window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc='';
+    const arrayBuffer=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:arrayBuffer}).promise;
+    let fullText='';
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p);
+      const content=await page.getTextContent();
+      fullText+=content.items.map(i=>i.str).join(' ')+'\n';
+    }
+    const matched=[],unmatched=[];
+    const lineRe=/0{6}\d{12}\s+([A-Z][A-Z0-9,.\- \/()]+?)\s+(\d+\.\d{4})\s+(?:PC|PAC|BOX|SET|BOT|SLC|G)\b/g;
+    const combined=fullText.split(/\n/).join(' ');
+    let m;
+    while((m=lineRe.exec(combined))!==null){
+      const rawName=m[1].trim();
+      const qty=parseFloat(m[2]);
+      if(qty===0) continue;
+      const lower=rawName.toLowerCase().replace(/,/g,' ').replace(/\u00a0/g,' ').replace(/\u2013/g,'-').replace(/\u2014/g,'-').replace(/\s+/g,' ');
+      let found=null;
+      for(const [kw,code] of DEL_MAP){ const nkw=kw.toLowerCase().replace(/,/g,' ').replace(/\s+/g,' ');if(lower.includes(nkw)){found=code;break;} }
+      if(found){
+        if(!ydicData[found]||qty>ydicData[found]) ydicData[found]=qty;
+        if(!matched.find(x=>x.code===found)) matched.push({name:rawName,code:found,qty});
+      } else {
+        if(!unmatched.find(u=>u.name===rawName)) unmatched.push({name:rawName,qty});
+      }
+    }
+    document.getElementById('ydic-summary').textContent=`${matched.length} products matched · ${unmatched.length} skipped`;
+    document.getElementById('ydic-unmatched').innerHTML=unmatched.length
+      ?'<b>No DIC mapping:</b><br>'+unmatched.map(u=>`${u.name.substring(0,45)} (${u.qty})`).join('<br>'):'';
+    document.getElementById('ydic-result').style.display='block';
+    document.getElementById('ydic-status').textContent=`✓ PDF parsed — ${matched.length} matched`;
+    renderYDICTable();
+  } catch(e){
+    document.getElementById('ydic-status').textContent='Error: '+e.message;
+    console.error(e);
+  }
+}
+
+function applyYDIC(){ renderYDICTable(); }
 </script>
 </body>
 </html>
