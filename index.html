@@ -10,6 +10,25 @@
   --text:#eaeaea;--muted:#8892a4;--border:#2a3a5c;--green:#27ae60;
   --font:'Segoe UI',system-ui,sans-serif;
   --mon:#2980b9;--tue:#6d4c41;--wed:#ecf0f1;--thu:#f1c40f;--fri:#8e44ad;--sat:#27ae60;--sun:#e67e22;
+  /* column theme vars - dark defaults */
+  --col-adq-bg:#0a2a0a;--col-adq-text:#86efac;
+  --col-total-bg:#1a2a3a;--col-total-text:#f5a623;
+  --col-del1-bg:transparent;--col-del1-text:#93c5fd;
+  --col-del2-bg:transparent;--col-del2-text:#60a5fa;
+  --col-del3-bg:transparent;--col-del3-text:#a78bfa;
+  --col-group-bg:#0f3460;--col-group-text:#f5a623;
+  --row-even:rgba(255,255,255,.02);
+}
+[data-theme="light"] {
+  --bg:#ffffff;--surface:#f8f9fa;--card:#e9ecef;--accent:#c0392b;--accent2:#2d6a4f;
+  --text:#212529;--muted:#6c757d;--border:#ced4da;--green:#198754;
+  --col-adq-bg:#d4edda;--col-adq-text:#155724;
+  --col-total-bg:#e9ecef;--col-total-text:#495057;
+  --col-del1-bg:#fff5f5;--col-del1-text:#c0392b;
+  --col-del2-bg:#ffe4e8;--col-del2-text:#a61c2e;
+  --col-del3-bg:#ffc8d1;--col-del3-text:#7b1222;
+  --col-group-bg:#d4edda;--col-group-text:#155724;
+  --row-even:rgba(0,0,0,.02);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
@@ -46,17 +65,31 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 table.dic-table{width:100%;border-collapse:collapse;font-size:.7rem;min-width:750px;}
 table.dic-table th{background:var(--card);padding:5px 4px;text-align:center;font-size:.62rem;border:1px solid var(--border);position:sticky;top:48px;white-space:nowrap;}
 table.dic-table td{padding:4px 3px;border:1px solid var(--border);text-align:center;vertical-align:middle;}
-table.dic-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+table.dic-table tr:nth-child(even) td{background:var(--row-even);}
 .product-name{text-align:left!important;font-weight:600;color:var(--text);cursor:pointer;white-space:nowrap;padding-left:8px!important;}
 .product-name:hover{color:var(--accent);text-decoration:underline;}
-.group-row td{background:var(--card)!important;font-weight:700;color:var(--accent2);font-size:.7rem;text-align:left!important;padding-left:8px!important;}
+.group-row td{background:var(--col-group-bg)!important;font-weight:700;color:var(--col-group-text);font-size:.7rem;text-align:left!important;padding-left:8px!important;}
 .cutoff{color:var(--muted);font-size:.62rem;}
 .count-cell{font-weight:700;min-width:28px;}
 .count-cell.has-value{color:#4ade80;}
+[data-theme="light"] .count-cell.has-value{color:#198754;}
 .var-cell{color:#f87171;font-size:.68rem;}
-.total-cell{font-weight:700;color:var(--accent2);}
-.del-cell{color:#60a5fa;}
-.forecast-cell{color:#a78bfa;}
+[data-theme="light"] .var-cell{color:#c0392b;}
+.total-cell{font-weight:700;background:var(--col-total-bg)!important;color:var(--col-total-text);}
+.adq-cell{background:var(--col-adq-bg)!important;color:var(--col-adq-text);font-weight:700;}
+.min-cell{background:var(--col-adq-bg)!important;color:var(--col-adq-text);font-weight:600;opacity:.85;}
+.max-cell{background:var(--col-adq-bg)!important;color:var(--col-adq-text);font-weight:600;opacity:.7;}
+.th-adq{background:var(--col-adq-bg)!important;color:var(--col-adq-text)!important;}
+.th-total{background:var(--col-total-bg)!important;color:var(--col-total-text)!important;}
+.del-cell{background:var(--col-del1-bg)!important;color:var(--col-del1-text);}
+.del-cell2{background:var(--col-del2-bg)!important;color:var(--col-del2-text);}
+.forecast-cell{background:var(--col-del3-bg)!important;color:var(--col-del3-text);}
+.th-del1{background:var(--col-del1-bg)!important;color:var(--col-del1-text)!important;}
+.th-del2{background:var(--col-del2-bg)!important;color:var(--col-del2-text)!important;}
+.th-del3{background:var(--col-del3-bg)!important;color:var(--col-del3-text)!important;}
+/* theme toggle button */
+.theme-toggle{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:.7rem;font-weight:600;cursor:pointer;color:var(--text);transition:all .2s;white-space:nowrap;}
+.theme-toggle:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
 
 /* Day header colors */
 .day-header{font-size:.6rem;padding:4px 3px!important;line-height:1.3;}
@@ -124,7 +157,10 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
 .sales-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
 .sales-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;}
 .sales-card label{font-size:.62rem;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;}
-.sales-card input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:1rem;font-weight:700;padding:7px;text-align:right;}
+.peso-wrap{display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 7px;}
+.peso-sign{color:var(--muted);font-weight:700;font-size:.9rem;flex-shrink:0;}
+.sales-card input{width:100%;background:transparent;border:none;color:var(--text);font-size:1rem;font-weight:700;text-align:right;outline:none;}
+.sales-card .peso-wrap:focus-within{border-color:var(--accent);}
 .sales-card input:focus{outline:none;border-color:var(--accent);}
 .sales-card .computed{font-size:1.1rem;font-weight:700;color:var(--accent2);padding:7px 0;}
 .btn-save-sales{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:8px;}
@@ -154,6 +190,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
   <div class="topbar">
     <h1>RR Dashboard</h1>
     <span class="date-display" id="today-display"></span>
+    <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()">☀️ Light</button>
   </div>
   <div class="tabs">
     <button class="tab-btn active" id="main-btn-dic" onclick="switchMain('dic')">DIC</button>
@@ -236,30 +273,24 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
     <div class="sales-section">
       <div class="section-label" style="padding-left:0">Today's Entry</div>
       <div class="sales-grid" style="margin-top:10px">
-        <div class="sales-card"><label>Sales</label><input type="number" id="s-sales" placeholder="0"/></div>
-        <div class="sales-card"><label>TC</label><input type="number" id="s-tc" placeholder="0"/></div>
-        <div class="sales-card"><label>Waste</label><input type="number" id="s-waste" placeholder="0"/></div>
-        <div class="sales-card"><label>Discount</label><input type="number" id="s-discount" placeholder="0"/></div>
-        <div class="sales-card"><label>MTD Waste</label><input type="number" id="s-grab" placeholder="0"/></div>
-        <div class="sales-card"><label>MTD Discount</label><input type="number" id="s-fpanda" placeholder="0"/></div>
+        <div class="sales-card"><label>Sales</label><div class="peso-wrap"><span class="peso-sign">₱</span><input type="text" inputmode="decimal" id="s-sales" placeholder="0" oninput="fmtSales(this)"/></div></div>
+        <div class="sales-card"><label>TC</label><div class="peso-wrap"><span class="peso-sign">₱</span><input type="text" inputmode="decimal" id="s-tc" placeholder="0" oninput="fmtSales(this)"/></div></div>
+        <div class="sales-card"><label>Waste</label><div class="peso-wrap"><span class="peso-sign">₱</span><input type="text" inputmode="decimal" id="s-waste" placeholder="0" oninput="fmtSales(this)"/></div></div>
+        <div class="sales-card"><label>Discount</label><div class="peso-wrap"><span class="peso-sign">₱</span><input type="text" inputmode="decimal" id="s-discount" placeholder="0" oninput="fmtSales(this)"/></div></div>
+        <div class="sales-card"><label>MTD Waste</label><div class="peso-wrap"><span class="peso-sign">₱</span><input type="text" inputmode="decimal" id="s-grab" placeholder="0" oninput="fmtSales(this)"/></div></div>
+        <div class="sales-card"><label>MTD Discount</label><div class="peso-wrap"><span class="peso-sign">₱</span><input type="text" inputmode="decimal" id="s-fpanda" placeholder="0" oninput="fmtSales(this)"/></div></div>
       </div>
       <button class="btn-save-sales" onclick="saveSales()">Save Today's Sales</button>
       <p class="sales-note" id="sales-save-note"></p>
 
       <div class="section-label" style="padding-left:0;margin-top:16px">MTD</div>
       <div class="sales-grid" style="margin-top:10px">
-        <div class="sales-card"><label>MTD TGT</label><input type="number" id="s-mtd-tgt" placeholder="0" oninput="updateMTD()"/></div>
-        <div class="sales-card"><label>MTD LY</label><input type="number" id="s-mtd-ly" placeholder="0"/></div>
-        <div class="sales-card"><label>MTD</label><input type="number" id="s-mtd" placeholder="0" oninput="updateMTD()"/></div>
-        <div class="sales-card"><label>AC</label><input type="number" id="s-ac" placeholder="0"/></div>
-        <div class="sales-card">
-          <label>ADS (auto)</label>
-          <div class="computed" id="ads-computed">—</div>
-        </div>
-        <div class="sales-card">
-          <label>ADS Target</label>
-          <div class="computed" id="ads-target-computed">—</div>
-        </div>
+        <div class="sales-card"><label>MTD TGT</label><div class="peso-wrap"><span class="peso-sign">₱</span><input type="text" inputmode="decimal" id="s-mtd-tgt" placeholder="0" oninput="fmtSales(this);updateMTD()"/></div></div>
+        <div class="sales-card"><label>MTD LY</label><div class="peso-wrap"><span class="peso-sign">₱</span><input type="text" inputmode="decimal" id="s-mtd-ly" placeholder="0" oninput="fmtSales(this)"/></div></div>
+        <div class="sales-card"><label>MTD</label><div class="peso-wrap"><span class="peso-sign">₱</span><input type="text" inputmode="decimal" id="s-mtd" placeholder="0" oninput="fmtSales(this);updateMTD()"/></div></div>
+        <div class="sales-card"><label>AC</label><div class="peso-wrap"><span class="peso-sign">₱</span><input type="text" inputmode="decimal" id="s-ac" placeholder="0" oninput="fmtSales(this)"/></div></div>
+        <div class="sales-card"><label>ADS (auto)</label><div class="computed" id="ads-computed">—</div></div>
+        <div class="sales-card"><label>ADS Target</label><div class="computed" id="ads-target-computed">—</div></div>
       </div>
 
       <!-- MTD Progress Chart -->
@@ -376,7 +407,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
   <div id="tab-print" class="tab-content">
     <div style="padding:20px">
       <div class="section-label" style="padding-left:0;margin-bottom:8px">Save as PNG</div>
-      <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;line-height:1.6">Captures a PNG of that section (dark theme).</p>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;line-height:1.6">Captures a PNG using the current theme.</p>
       <div style="display:flex;flex-direction:column;gap:14px;max-width:340px">
         <button class="btn-screenshot" onclick="takeScreenshot('cakes')">🎂&nbsp; Save Cakes + Icing (PNG)</button>
         <button class="btn-screenshot" onclick="takeScreenshot('breads')">🍞&nbsp; Save Breads + Polvoron (PNG)</button>
@@ -740,7 +771,7 @@ let adqData = {};
 
 // ── PASSWORD ─────────────────────────────────────────────────
 function checkPw(){
-  if(document.getElementById('pw-input').value==='Max0528'){
+  if(document.getElementById('pw-input').value==='RR7024'){
     document.getElementById('gate').style.display='none';
     document.getElementById('app').style.display='block';
     init();
@@ -795,6 +826,7 @@ function init(){
   buildTable('cake',CAKE_PRODUCTS,CAKE_DAYS,true);
   buildTable('bread',BREAD_PRODUCTS,BREAD_DAYS,false);
   buildTable('polv',POLV_PRODUCTS,BREAD_DAYS,false);
+  applyTheme(currentTheme);
   buildSoldTable('cake',CAKE_PRODUCTS,CAKE_DAYS,true);
   buildSoldTable('bread',BREAD_PRODUCTS,BREAD_DAYS,false);
   buildSoldTable('polv',POLV_PRODUCTS,BREAD_DAYS,false);
@@ -818,22 +850,19 @@ function dayColor(key){return addDays(TODAY,COLOR_OFFSETS[key]||0);}
 function buildTable(tid,products,days,colorDays){
   const thead=document.getElementById(tid+'-thead');
   const tbody=document.getElementById(tid+'-tbody');
-  // Header - display order: D1, D2, D3, D4, LA (no reverse needed, arrays already in this order)
-  let th=`<tr><th>Product</th><th>Cut</th><th style='width:28px;max-width:28px'>ADQ</th><th style='width:28px;max-width:28px'>MIN</th><th style='width:28px;max-width:28px'>MAX</th>`;
+  let th=`<tr><th>Product</th><th>Cut</th><th class="th-adq" style='width:28px;max-width:28px'>ADQ</th><th class="th-adq" style='width:28px;max-width:28px'>MIN</th><th class="th-adq" style='width:28px;max-width:28px'>MAX</th>`;
   days.forEach(day=>{
-    const dt=addDays(TODAY,day.offset); // expiry date
-    const colorDt=dayColor(day.key);   // color from sequence
+    const dt=addDays(TODAY,day.offset);
+    const colorDt=dayColor(day.key);
     const cls=colorDays?dowClass(colorDt):'';
     th+=`<th class="day-header ${cls}">${day.label}<br><span style="font-weight:400;font-size:.56rem">${fmtShort(dt)}</span></th>`;
   });
-  th+=`<th>VAR</th><th>TOTAL</th><th>Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,1))}</span></th><th>Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,2))}</span></th><th>Forecast<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,3))}</span></th></tr>`;
+  th+=`<th>Variance</th><th class="th-total">TOTAL</th><th class="th-del1">Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,1))}</span></th><th class="th-del2">Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,2))}</span></th><th class="th-del3">Forecast<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,3))}</span></th></tr>`;
   thead.innerHTML=th;
-  // Body
   let html='';
   products.forEach(p=>{
     if(p.group){html+=`<tr class="group-row"><td colspan="15">${p.group}</td></tr>`;return;}
     if(p.pack){
-      // Pack product row
       if(!counts[tid][p.code])counts[tid][p.code]={};
       const c=counts[tid][p.code];
       const sc=safeCode(p.code);
@@ -859,18 +888,22 @@ function buildTable(tid,products,days,colorDays){
     html+=`<tr id="row-${tid}-${sc}">
       <td class="product-name" onclick="openModal('${tid}','${p.code.replace(/'/g,"\\'")}','${p.cutoff}')">${p.code}</td>
       <td class="cutoff">${p.cutoff}</td>
-      <td id="adq-${tid}-${sc}">${adq?adq.toFixed(1):''}</td>
-      <td id="min-${tid}-${sc}">${min?min.toFixed(1):''}</td>
-      <td id="max-${tid}-${sc}">${max?max.toFixed(1):''}</td>`;
+      <td class="adq-cell" id="adq-${tid}-${sc}">${adq?adq.toFixed(1):''}</td>
+      <td class="min-cell" id="min-${tid}-${sc}">${min?min.toFixed(1):''}</td>
+      <td class="max-cell" id="max-${tid}-${sc}">${max?max.toFixed(1):''}</td>`;
     ['d1','d2','d3','d4','la'].forEach(key=>{
       const val=c[key]!==undefined&&c[key]!==''?c[key]:'';
       html+=`<td class="count-cell${val!==''&&val!==0?' has-value':''}" id="cell-${tid}-${sc}-${key}">${val}</td>`;
     });
     const tot=['d1','d2','d3','d4','la'].reduce((s,k)=>s+(Number(c[k])||0),0);
-    html+=`<td class="var-cell" id="var-${tid}-${sc}">${c.var||''}</td>
+    const _yest=ydicData[p.code];
+    const _vnum=(_yest!==undefined&&tot!==0)?(tot-_yest):null;
+    const _vtxt=_vnum===null?'':(_vnum===0?'0':(_vnum>0?'+'+_vnum:_vnum));
+    const _vcol=_vnum===null?'':(_vnum<0?'#f87171':_vnum>0?'#4ade80':'var(--muted)');
+    html+=`<td class="var-cell" id="var-${tid}-${sc}" style="color:${_vcol}">${_vtxt}</td>
       <td class="total-cell" id="tot-${tid}-${sc}">${tot||''}</td>
       <td class="del-cell" id="del1-${tid}-${sc}">${delData.del1[p.code]||''}</td>
-      <td class="del-cell" id="del2-${tid}-${sc}">${delData.del2[p.code]||''}</td>
+      <td class="del-cell2" id="del2-${tid}-${sc}">${delData.del2[p.code]||''}</td>
       <td class="forecast-cell" id="del3-${tid}-${sc}">${delData.del3[p.code]||''}</td>
     </tr>`;
   });
@@ -909,7 +942,7 @@ function openModal(tid,code,cutoff){
     <div class="day-input-label" style="background:${laBg};color:${laFg}">LA · ${fmtShort(laDt)}</div>
     <div class="day-input-field" id="mi-la">${MS.vals.la}</div></div>`;
   html+=`<div class="day-input-block" onclick="setActive('var')">
-    <div class="day-input-label neutral">VAR</div>
+    <div class="day-input-label neutral">Variance</div>
     <div class="day-input-field" id="mi-var">${MS.vals.var}</div></div>`;
   document.getElementById('modal-day-inputs').innerHTML=html;
   document.getElementById('active-field-label').textContent='Tap a field above to edit';
@@ -921,7 +954,7 @@ function setActive(key){
   const isSold=document.querySelector('.btn-save').onclick===saveSoldModal;
   const state=isPack?PM:isSold?SM:MS;
   state.active=key;
-  const labels={d1:'Day 1',d2:'Day 2',d3:'Day 3',d4:'Day 4',la:'LA',var:'VAR'};
+  const labels={d1:'Day 1',d2:'Day 2',d3:'Day 3',d4:'Day 4',la:'LA',var:'Variance'};
   document.getElementById('active-field-label').textContent='Editing: '+labels[key];
   document.querySelectorAll('.day-input-field').forEach(el=>el.style.background='');
   const el=document.getElementById('mi-'+key);
@@ -975,13 +1008,16 @@ function updateRow(tid,code){
     return s2+(raw-sv);
   },0);
   const te=document.getElementById(`tot-${tid}-${sc}`);if(te)te.textContent=tot>0?tot:'';
-  // VAR coloring
-  const varVal=c.var;
+  // Variance = TOTAL - Yesterday DIC
   const ve=document.getElementById(`var-${tid}-${sc}`);
   if(ve){
-    if(varVal===undefined||varVal===''||varVal===null){ve.textContent='';ve.style.color='';}
-    else if(Number(varVal)<0){ve.textContent=varVal;ve.style.color='#f87171';}
-    else{ve.textContent='+'+varVal;ve.style.color='#4ade80';}
+    const yest=ydicData[code];
+    if(yest===undefined||yest===null){ve.textContent='';ve.style.color='';}
+    else{
+      const vNum=tot-(yest||0);
+      ve.textContent=vNum===0?'0':(vNum>0?'+'+vNum:vNum);
+      ve.style.color=vNum<0?'#f87171':vNum>0?'#4ade80':'var(--muted)';
+    }
   }
 }
 
@@ -1118,7 +1154,7 @@ function openPackModal(tid,code,mult,targetsStr,targetMultStr){
   html+=`<div class="day-input-block" onclick="setActive('la')">
     <div class="day-input-label neutral">LA · ${fmtShort(laDt)}</div>
     <div class="day-input-field" id="mi-la">${PM.vals.la}</div></div>`;
-  html+=`<div class="day-input-block" style="opacity:.3"><div class="day-input-label neutral">VAR</div><div class="day-input-field">—</div></div>`;
+  html+=`<div class="day-input-block" style="opacity:.3"><div class="day-input-label neutral">Variance</div><div class="day-input-field">—</div></div>`;
   document.getElementById('modal-day-inputs').innerHTML=html;
   document.getElementById('active-field-label').textContent='Tap a field above to edit';
   MS.active=null; // reset regular modal state
@@ -1207,15 +1243,30 @@ function getTableData(tableId){
   return rows;
 }
 
-function drawTableToCanvas(ctx,rows,startY,colWidths,rowHeight,canvasWidth){
+function getThemeColors(){
+  const s=getComputedStyle(document.documentElement);
+  const g=v=>s.getPropertyValue(v).trim();
+  return {
+    bg:       g('--bg')       ||'#1a1a2e',
+    surface:  g('--surface')  ||'#16213e',
+    card:     g('--card')     ||'#0f3460',
+    text:     g('--text')     ||'#eaeaea',
+    border:   g('--border')   ||'#2a3a5c',
+    groupBg:  g('--col-group-bg')   ||'#0f3460',
+    groupText:g('--col-group-text') ||'#f5a623',
+  };
+}
+
+function drawTableToCanvas(ctx,rows,startY,colWidths,rowHeight,canvasWidth,theme){
+  if(!theme) theme=getThemeColors();
   ctx.font='10px Segoe UI, sans-serif';
   let y=startY;
   rows.forEach(row=>{
     let x=8;
     if(row.isGroup){
-      ctx.fillStyle='#0f3460';
+      ctx.fillStyle=theme.groupBg;
       ctx.fillRect(8,y,canvasWidth-16,rowHeight);
-      ctx.fillStyle='#f5a623';
+      ctx.fillStyle=theme.groupText;
       ctx.font='bold 11px Segoe UI, sans-serif';
       ctx.textAlign='left';
       ctx.fillText(row.cells[0].text,14,y+rowHeight/2+4);
@@ -1225,16 +1276,17 @@ function drawTableToCanvas(ctx,rows,startY,colWidths,rowHeight,canvasWidth){
     }
     row.cells.forEach((cell,i)=>{
       const w=colWidths[i]||50;
-      ctx.fillStyle=cell.bg&&cell.bg!=='rgba(0, 0, 0, 0)'?cell.bg:(row.cells[0].isHeader?'#0f3460':'#16213e');
+      const rawBg=cell.bg;
+      const isTransparent=!rawBg||rawBg==='rgba(0, 0, 0, 0)'||rawBg==='transparent';
+      ctx.fillStyle=isTransparent?(row.cells[0].isHeader?theme.card:theme.surface):rawBg;
       ctx.fillRect(x,y,w,rowHeight);
-      ctx.strokeStyle='#2a3a5c';
+      ctx.strokeStyle=theme.border;
       ctx.lineWidth=0.5;
       ctx.strokeRect(x,y,w,rowHeight);
-      ctx.fillStyle=cell.color&&cell.color!=='rgba(0, 0, 0, 0)'?cell.color:'#eaeaea';
+      ctx.fillStyle=cell.color&&cell.color!=='rgba(0, 0, 0, 0)'?cell.color:theme.text;
       ctx.font=cell.isHeader?'bold 9px Segoe UI, sans-serif':(i===0?'600 10px Segoe UI, sans-serif':'10px Segoe UI, sans-serif');
       ctx.textAlign=i===0?'left':'center';
       const textX=i===0?x+5:x+w/2;
-      // Multi-line support (label + date for headers)
       const lines=cell.text.split('\n');
       if(lines.length>1){
         lines.forEach((ln,li)=>{
@@ -1263,8 +1315,8 @@ function takeScreenshot(type){
   // ── SALES PNG ──────────────────────────────────────────────
   if(type==='sales'){
     try{
-      const mtd=Number(document.getElementById('s-mtd').value)||0;
-      const tgt=Number(document.getElementById('s-mtd-tgt').value)||0;
+      const mtd=getSalesVal('s-mtd');
+      const tgt=getSalesVal('s-mtd-tgt');
       const pct=tgt>0?Math.min(mtd/tgt,1):0;
       const dLeft=Number(document.getElementById('mtd-days-left').textContent.split('/')[0])||0;
       const dTotal=daysInMonth(TODAY);
@@ -1290,12 +1342,13 @@ function takeScreenshot(type){
       canvas.width=W*2; canvas.height=H*2;
       const ctx=canvas.getContext('2d');
       ctx.scale(2,2);
+      const theme=getThemeColors();
 
       // BG
-      ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle=theme.bg; ctx.fillRect(0,0,W,H);
 
       // Title
-      ctx.fillStyle='#f5a623'; ctx.font='bold 11px Segoe UI,sans-serif'; ctx.textAlign='left';
+      ctx.fillStyle=theme.groupText; ctx.font='bold 11px Segoe UI,sans-serif'; ctx.textAlign='left';
       ctx.fillText('RR Sales — '+document.getElementById('today-display').textContent,PAD,PAD+10);
 
       // Cards
@@ -1304,13 +1357,13 @@ function takeScreenshot(type){
         const col=i%COLS, row=Math.floor(i/COLS);
         const x=PAD+col*(colW+GAP), cy=cardY+row*(CARD_H+GAP);
         // card bg
-        ctx.fillStyle='rgba(255,255,255,.06)';
+        ctx.fillStyle=theme.surface+'cc';
         ctx.beginPath(); ctx.roundRect(x,cy,colW,CARD_H-2,4); ctx.fill();
         // label
-        ctx.fillStyle='#7a8fa6'; ctx.font='6.5px Segoe UI,sans-serif'; ctx.textAlign='left';
+        ctx.fillStyle=theme.text+'99'; ctx.font='6.5px Segoe UI,sans-serif'; ctx.textAlign='left';
         ctx.fillText(f.label.toUpperCase(),x+5,cy+9);
         // value
-        ctx.fillStyle='#e8f0fe'; ctx.font='bold 10px Segoe UI,sans-serif';
+        ctx.fillStyle=theme.text; ctx.font='bold 10px Segoe UI,sans-serif';
         const el=document.getElementById(f.id);
         const raw=el.tagName==='INPUT'?el.value:el.textContent;
         const val=isNaN(raw)||raw===''?raw:(Number(raw)).toLocaleString();
@@ -1322,11 +1375,11 @@ function takeScreenshot(type){
         const chartY=cardY+cardRows*(CARD_H+GAP)+GAP;
 
         // Chart card bg
-        ctx.fillStyle='rgba(255,255,255,.04)';
+        ctx.fillStyle=theme.surface+'aa';
         ctx.beginPath(); ctx.roundRect(PAD,chartY,W-PAD*2,chartH-4,6); ctx.fill();
 
         // Section label
-        ctx.fillStyle='#7a8fa6'; ctx.font='bold 6.5px Segoe UI,sans-serif'; ctx.textAlign='left';
+        ctx.fillStyle=theme.text+'99'; ctx.font='bold 6.5px Segoe UI,sans-serif'; ctx.textAlign='left';
         ctx.fillText('MTD PROGRESS vs TARGET',PAD+8,chartY+12);
 
         // Donut
@@ -1338,7 +1391,7 @@ function takeScreenshot(type){
         ctx.strokeStyle=pct>=1?'#2ecc71':'#27ae60';
         ctx.lineWidth=lw; ctx.lineCap='round'; ctx.stroke();
         // Center %
-        ctx.fillStyle='#e8f0fe'; ctx.font='bold 11px Segoe UI,sans-serif';
+        ctx.fillStyle=theme.text; ctx.font='bold 11px Segoe UI,sans-serif';
         ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText(Math.round(pct*100)+'%',cx,cy2);
         ctx.textBaseline='alphabetic';
@@ -1348,7 +1401,7 @@ function takeScreenshot(type){
         // Big %
         ctx.fillStyle='#2ecc71'; ctx.font='bold 22px Segoe UI,sans-serif'; ctx.textAlign='left';
         ctx.fillText(Math.round(pct*100)+'%',sx,chartY+36);
-        ctx.fillStyle='#7a8fa6'; ctx.font='8px Segoe UI,sans-serif';
+        ctx.fillStyle=theme.text+'99'; ctx.font='8px Segoe UI,sans-serif';
         ctx.fillText('of target reached',sx,chartY+48);
 
         const rows2=[
@@ -1359,14 +1412,14 @@ function takeScreenshot(type){
           const ry=chartY+62+ri*16;
           ctx.fillStyle=r2.col; ctx.font='7px Segoe UI,sans-serif';
           ctx.fillText('▌ '+r2.label,sx,ry);
-          ctx.fillStyle='#e8f0fe'; ctx.font='bold 8px Segoe UI,sans-serif'; ctx.textAlign='right';
+          ctx.fillStyle=theme.text; ctx.font='bold 8px Segoe UI,sans-serif'; ctx.textAlign='right';
           ctx.fillText(r2.val,W-PAD-8,ry);
           ctx.textAlign='left';
         });
 
         // Divider
         const divY=chartY+100;
-        ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=.5;
+        ctx.strokeStyle=theme.border; ctx.lineWidth=.5;
         ctx.beginPath(); ctx.moveTo(sx,divY); ctx.lineTo(W-PAD-8,divY); ctx.stroke();
 
         const stats2=[
@@ -1375,9 +1428,9 @@ function takeScreenshot(type){
         ];
         stats2.forEach((s2,si)=>{
           const sy=divY+12+si*13;
-          ctx.fillStyle='#7a8fa6'; ctx.font='7px Segoe UI,sans-serif'; ctx.textAlign='left';
+          ctx.fillStyle=theme.text+'99'; ctx.font='7px Segoe UI,sans-serif'; ctx.textAlign='left';
           ctx.fillText(s2.label,sx,sy);
-          ctx.fillStyle=s2.col; ctx.font='bold 8px Segoe UI,sans-serif'; ctx.textAlign='right';
+          ctx.fillStyle=s2.col||theme.text; ctx.font='bold 8px Segoe UI,sans-serif'; ctx.textAlign='right';
           ctx.fillText(s2.val,W-PAD-8,sy);
           ctx.textAlign='left';
         });
@@ -1419,24 +1472,27 @@ function takeScreenshot(type){
     const ctx=canvas.getContext('2d');
     ctx.scale(2,2);
 
+    // Read live theme colors
+    const theme=getThemeColors();
+
     // Background
-    ctx.fillStyle='#1a1a2e';
+    ctx.fillStyle=theme.bg;
     ctx.fillRect(0,0,canvasWidth,canvasHeight);
 
     // Header
-    ctx.fillStyle='#f5a623';
+    ctx.fillStyle=theme.groupText;
     ctx.font='bold 13px Segoe UI, sans-serif';
     ctx.textAlign='left';
     ctx.fillText('RR Dashboard — '+document.getElementById('today-display').textContent,8,20);
 
     let y=36;
     allRowData.forEach(t=>{
-      ctx.fillStyle='#f5a623';
+      ctx.fillStyle=theme.groupText;
       ctx.font='bold 11px Segoe UI, sans-serif';
       ctx.textAlign='left';
       ctx.fillText(t.label,8,y+10);
       y+=20;
-      y=drawTableToCanvas(ctx,t.rows,y,colWidths,rowHeight,canvasWidth);
+      y=drawTableToCanvas(ctx,t.rows,y,colWidths,rowHeight,canvasWidth,theme);
       y+=10;
     });
 
@@ -1445,8 +1501,8 @@ function takeScreenshot(type){
     preview.id='ss-preview-wrap';
     preview.style.cssText='margin-top:16px;';
     preview.innerHTML=`
-      <p style="font-size:.72rem;color:#f5a623;margin-bottom:8px;">⬇ Long-press the image (mobile) or tap the button below:</p>
-      <img src="${imgSrc}" style="width:100%;border-radius:8px;border:1px solid #2a3a5c;" />
+      <p style="font-size:.72rem;color:${theme.groupText};margin-bottom:8px;">⬇ Long-press the image (mobile) or tap the button below:</p>
+      <img src="${imgSrc}" style="width:100%;border-radius:8px;border:1px solid ${theme.border};" />
       <a href="${imgSrc}" download="DIC_${type}_${fmtShort(TODAY).replace('.','')}.png" style="display:block;text-align:center;margin-top:10px;padding:10px;background:#e94560;color:#fff;border-radius:8px;text-decoration:none;font-size:.8rem;font-weight:600;">⬇ Download PNG</a>`;
     document.getElementById('screenshot-status').after(preview);
     status.textContent='✓ Image ready';
@@ -1603,17 +1659,14 @@ function loadSales(){
     const todayData=all[todayKey]||{};
     ['sales','tc','waste','discount','grab','fpanda'].forEach(f=>{
       const el=document.getElementById('s-'+f);
-      if(el&&todayData[f]!==undefined)el.value=todayData[f];
+      if(el&&todayData[f]!==undefined){el.value=todayData[f];el.dataset.raw=todayData[f];}
     });
     ['mtd-tgt','mtd-ly','mtd','ac'].forEach(f=>{
       const el=document.getElementById('s-'+f);
       const key='mtd_'+f;
-      if(el&&all[key]!==undefined)el.value=all[key];
+      if(el&&all[key]!==undefined){el.value=all[key];el.dataset.raw=all[key];}
     });
     updateMTD();
-    // Auto-update when MTD or TGT changes
-    document.getElementById('s-mtd').addEventListener('input',updateMTD);
-    document.getElementById('s-mtd-tgt').addEventListener('input',updateMTD);
   }catch(e){}
 }
 
@@ -1624,15 +1677,15 @@ function saveSales(){
     const todayKey=fmtShort(TODAY);
     all[todayKey]={};
     ['sales','tc','waste','discount','grab','fpanda'].forEach(f=>{
-      const v=document.getElementById('s-'+f).value;
-      if(v)all[todayKey][f]=Number(v);
+      const v=getSalesVal('s-'+f);
+      if(v)all[todayKey][f]=v;
     });
     ['mtd-tgt','mtd-ly','mtd','ac'].forEach(f=>{
-      const v=document.getElementById('s-'+f).value;
-      if(v)all['mtd_'+f]=Number(v);
+      const v=getSalesVal('s-'+f);
+      if(v)all['mtd_'+f]=v;
     });
     localStorage.setItem('rr_sales',JSON.stringify(all));
-    updateADS();
+    updateMTD();
     document.getElementById('sales-save-note').textContent='✓ Saved '+todayKey;
   }catch(e){}
 }
@@ -1644,9 +1697,9 @@ function daysInMonth(d){ return new Date(d.getFullYear(),d.getMonth()+1,0).getDa
 function updateMTD(){
   const day   = TODAY.getDate();
   const total = daysInMonth(TODAY);
-  const left  = total - day;            // days remaining after today
-  const mtd   = Number(document.getElementById('s-mtd').value)||0;
-  const tgt   = Number(document.getElementById('s-mtd-tgt').value)||0;
+  const left  = total - day;
+  const mtd   = getSalesVal('s-mtd');
+  const tgt   = getSalesVal('s-mtd-tgt');
 
   // ADS (actual)
   const ads = day>0&&mtd>0 ? Math.round(mtd/day) : 0;
@@ -1899,21 +1952,21 @@ function saveSalesPDF(){
     doc.text(document.getElementById('today-display').textContent,10,20);
 
     const fields=[
-      ['Sales',    document.getElementById('s-sales').value],
-      ['TC',       document.getElementById('s-tc').value],
-      ['Waste',    document.getElementById('s-waste').value],
-      ['Discount', document.getElementById('s-discount').value],
-      ['MTD Waste',  document.getElementById('s-grab').value],
-      ['MTD Discount',document.getElementById('s-fpanda').value],
-      ['MTD TGT',  document.getElementById('s-mtd-tgt').value],
-      ['MTD LY',   document.getElementById('s-mtd-ly').value],
-      ['MTD',      document.getElementById('s-mtd').value],
-      ['AC',       document.getElementById('s-ac').value],
+      ['Sales',    getSalesVal('s-sales')],
+      ['TC',       getSalesVal('s-tc')],
+      ['Waste',    getSalesVal('s-waste')],
+      ['Discount', getSalesVal('s-discount')],
+      ['MTD Waste',  getSalesVal('s-grab')],
+      ['MTD Discount',getSalesVal('s-fpanda')],
+      ['MTD TGT',  getSalesVal('s-mtd-tgt')],
+      ['MTD LY',   getSalesVal('s-mtd-ly')],
+      ['MTD',      getSalesVal('s-mtd')],
+      ['AC',       getSalesVal('s-ac')],
       ['ADS',      document.getElementById('ads-computed').textContent],
       ['ADS Target',document.getElementById('ads-target-computed').textContent],
     ];
-    const mtd=Number(document.getElementById('s-mtd').value)||0;
-    const tgt=Number(document.getElementById('s-mtd-tgt').value)||0;
+    const mtd=Number(getSalesVal('s-mtd'))||0;
+    const tgt=Number(getSalesVal('s-mtd-tgt'))||0;
     if(tgt) fields.push(['MTD %', Math.round(mtd/tgt*100)+'%']);
 
     doc.autoTable({
@@ -1929,7 +1982,33 @@ function saveSalesPDF(){
     status.textContent='✓ Sales PDF saved';
   }catch(e){ status.textContent='PDF Error: '+e.message; console.error(e); }
 }
-// ── YESTERDAY'S DIC — PDF PARSER ─────────────────────────────
+// ── THEME TOGGLE ─────────────────────────────────────────────
+let currentTheme = localStorage.getItem('rr_theme') || 'dark';
+function applyTheme(t){
+  currentTheme = t;
+  document.documentElement.setAttribute('data-theme', t==='light'?'light':'');
+  const btn = document.getElementById('theme-toggle-btn');
+  if(btn) btn.textContent = t==='light'?'🌙 Dark':'☀️ Light';
+  localStorage.setItem('rr_theme', t);
+}
+function toggleTheme(){ applyTheme(currentTheme==='light'?'dark':'light'); }
+
+// ── SALES PESO FORMATTING ────────────────────────────────────
+function fmtSales(el){
+  // Store raw numeric value, allow user to type freely
+  const raw = el.value.replace(/[^0-9.]/g,'');
+  el.dataset.raw = raw;
+  // Trigger MTD update if this is an MTD field
+  if(el.id==='s-mtd'||el.id==='s-mtd-tgt') updateMTD();
+}
+function getSalesVal(id){
+  const el=document.getElementById(id);
+  if(!el) return 0;
+  const raw=el.dataset.raw||el.value.replace(/[^0-9.]/g,'');
+  return Number(raw)||0;
+}
+function pesoFmt(n){ return '₱'+Number(n).toLocaleString('en-PH'); }
+
 let ydicData = {};
 
 function renderYDICTable(){
@@ -1954,7 +2033,7 @@ function renderYDICTable(){
       const yVal=ydicData[code];
       const d1Val=delData.del1[code];
       const d2Val=delData.del2[code];
-      if(yVal===undefined&&!d1Val&&!d2Val&&!adqData[code]) return;
+      // Always show all products
       hasRow=true;
       const tr=document.createElement('tr');
       const yC=yVal!==undefined?`<td style="text-align:center;font-weight:700;color:#93c5fd">${yVal%1===0?yVal:yVal.toFixed(2)}</td>`:`<td style="text-align:center;color:var(--muted)">—</td>`;
@@ -2015,6 +2094,10 @@ async function loadYDIC(input){
     document.getElementById('ydic-result').style.display='block';
     document.getElementById('ydic-status').textContent=`✓ PDF parsed — ${matched.length} matched`;
     renderYDICTable();
+    // Refresh Variance column across DIC tables
+    ['cake','bread','polv'].forEach(tid=>{
+      Object.keys(counts[tid]||{}).forEach(code=>updateRow(tid,code));
+    });
   } catch(e){
     document.getElementById('ydic-status').textContent='Error: '+e.message;
     console.error(e);
