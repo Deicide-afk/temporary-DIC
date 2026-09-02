@@ -350,7 +350,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
         <span style="font-size:1.8rem">📄</span>
         <span style="font-size:.8rem;font-weight:600;color:var(--accent2)">Tap to upload Physical Count PDF</span>
         <span style="font-size:.7rem;color:var(--muted)" id="ydic-fname">No file chosen</span>
-        <input type="file" id="ydic-file" accept=".pdf" style="display:none" onchange="loadYDIC(this)"/>
+        <input type="file" id="ydic-file" accept=".pdf,.PDF,application/pdf" style="display:none" onchange="loadYDIC(this)"/>
       </label>
 
       <div id="ydic-status" style="font-size:.75rem;color:var(--muted);margin-bottom:10px;min-height:18px"></div>
@@ -514,6 +514,7 @@ const CAKE_PRODUCTS = [
   {code:'CMDC JR',cutoff:'-3 days'},
   {code:'CMDC MED',cutoff:'-3 days'},{code:'SCHDC JR',cutoff:'-3 days'},
   {code:'SCHDC MED',cutoff:'-3 days'},
+  {code:'SUCDC JR', cutoff:'-3 days'},{code:'SUCDC REG',cutoff:'-3 days'},
   {group:'ICING'},
   {code:'BIL',cutoff:'-1 day'},{code:'RIL',cutoff:'-1 day'},
   {code:'WIL',cutoff:'-1 day'},{code:'HALF CHERRIES',cutoff:''},
@@ -686,6 +687,8 @@ const DEL_MAP = [
   ['round chococaramel',                        'SCHDC JR'],
   ['cake,dc,medium,chococaramel,schdc,8x12',    'SCHDC MED'],
   ['medium chococaramel',                       'SCHDC MED'],
+  ['cake,dc,round,ube cheese,sucdc,8dia',       'SUCDC JR'],
+  ['cake,dc,medium,ube cheese,sucdc,8x12',      'SUCDC REG'],
   ['cake,dc,round,caramelmocha,cmdc,8dia',      'CMDC JR'],
   ['cake,dc,round,choco rainbow',               'RDC JR'],
   ['cake,reg,black forest',                     'BF REG'],
