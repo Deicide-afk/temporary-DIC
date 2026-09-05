@@ -200,6 +200,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
   <!-- DIC sub-tabs -->
   <div class="sub-tabs" id="sub-dic">
     <button class="sub-btn active" id="sub-btn-dic" onclick="switchTab('dic')">DIC</button>
+    <button class="sub-btn" id="sub-btn-count" onclick="switchTab('count')">Count</button>
     <button class="sub-btn" id="sub-btn-prodsold" onclick="switchTab('prodsold')">Product Sold</button>
     <button class="sub-btn" id="sub-btn-delivery" onclick="switchTab('delivery')">Delivery</button>
     <button class="sub-btn" id="sub-btn-dicsold" onclick="switchTab('dicsold')">DIC Sold</button>
@@ -215,6 +216,18 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
       <table class="dic-table" id="bread-table"><thead id="bread-thead"></thead><tbody id="bread-tbody"></tbody></table>
       <div class="section-label" style="margin-top:16px">🍬 Polvoron</div>
       <table class="dic-table" id="polv-table"><thead id="polv-thead"></thead><tbody id="polv-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- COUNT TAB -->
+  <div id="tab-count" class="tab-content">
+    <div class="dic-container">
+      <div class="section-label">🎂 Cakes</div>
+      <table class="dic-table" style="table-layout:auto" id="cnt-cake-table"><thead id="cnt-cake-thead"></thead><tbody id="cnt-cake-tbody"></tbody></table>
+      <div class="section-label" style="margin-top:16px">🍞 Breads & PBDs</div>
+      <table class="dic-table" style="table-layout:auto" id="cnt-bread-table"><thead id="cnt-bread-thead"></thead><tbody id="cnt-bread-tbody"></tbody></table>
+      <div class="section-label" style="margin-top:16px">🍬 Polvoron</div>
+      <table class="dic-table" style="table-layout:auto" id="cnt-polv-table"><thead id="cnt-polv-thead"></thead><tbody id="cnt-polv-tbody"></tbody></table>
     </div>
   </div>
 
@@ -477,6 +490,20 @@ const CAKE_DAYS = [
   {key:'d4',label:'Day 4',offset:4},
   {key:'la',label:'LA',  offset:0},
 ];
+// Count days: same offsets as DIC but no LA
+const CAKE_COUNT_DAYS = [
+  {key:'d1',label:'Day 1',offset:7},
+  {key:'d2',label:'Day 2',offset:6},
+  {key:'d3',label:'Day 3',offset:5},
+  {key:'d4',label:'Day 4',offset:4},
+];
+const BREAD_COUNT_DAYS = [
+  {key:'d1',label:'Day 1',offset:6},
+  {key:'d2',label:'Day 2',offset:5},
+  {key:'d3',label:'Day 3',offset:4},
+  {key:'d4',label:'Day 4',offset:3},
+];
+
 // Breads: D1=+6, D2=+5, D3=+4, D4=+3, LA=today
 const BREAD_DAYS = [
   {key:'d1',label:'Day 1',offset:6},
@@ -785,7 +812,7 @@ function checkPw(){
 document.getElementById('pw-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkPw();});
 
 // ── TAB SWITCH ───────────────────────────────────────────────
-const DIC_SUBS=['dic','prodsold','delivery','dicsold','ydic'];
+const DIC_SUBS=['dic','count','prodsold','delivery','dicsold','ydic'];
 function switchMain(main){
   ['dic','sales','print'].forEach(m=>{
     document.getElementById('main-btn-'+m).classList.toggle('active',m===main);
@@ -829,6 +856,9 @@ function init(){
   buildTable('cake',CAKE_PRODUCTS,CAKE_DAYS,true);
   buildTable('bread',BREAD_PRODUCTS,BREAD_DAYS,false);
   buildTable('polv',POLV_PRODUCTS,BREAD_DAYS,false);
+  buildCountTable('cnt-cake',CAKE_PRODUCTS,CAKE_COUNT_DAYS,true);
+  buildCountTable('cnt-bread',BREAD_PRODUCTS,BREAD_COUNT_DAYS,false);
+  buildCountTable('cnt-polv',POLV_PRODUCTS,BREAD_COUNT_DAYS,false);
   applyTheme(currentTheme);
   buildSoldTable('cake',CAKE_PRODUCTS,CAKE_DAYS,true);
   buildSoldTable('bread',BREAD_PRODUCTS,BREAD_DAYS,false);
@@ -899,11 +929,7 @@ function buildTable(tid,products,days,colorDays){
       html+=`<td class="count-cell${val!==''&&val!==0?' has-value':''}" id="cell-${tid}-${sc}-${key}">${val}</td>`;
     });
     const tot=['d1','d2','d3','d4','la'].reduce((s,k)=>s+(Number(c[k])||0),0);
-    const _yest=ydicData[p.code];
-    const _vnum=(_yest!==undefined&&tot!==0)?(tot-_yest):null;
-    const _vtxt=_vnum===null?'':(_vnum===0?'0':(_vnum>0?'+'+_vnum:_vnum));
-    const _vcol=_vnum===null?'':(_vnum<0?'#f87171':_vnum>0?'#4ade80':'var(--muted)');
-    html+=`<td class="var-cell" id="var-${tid}-${sc}" style="color:${_vcol}">${_vtxt}</td>
+    html+=`<td class="var-cell" id="var-${tid}-${sc}">${c.var||''}</td>
       <td class="total-cell" id="tot-${tid}-${sc}">${tot||''}</td>
       <td class="del-cell" id="del1-${tid}-${sc}">${delData.del1[p.code]||''}</td>
       <td class="del-cell2" id="del2-${tid}-${sc}">${delData.del2[p.code]||''}</td>
@@ -1011,16 +1037,13 @@ function updateRow(tid,code){
     return s2+(raw-sv);
   },0);
   const te=document.getElementById(`tot-${tid}-${sc}`);if(te)te.textContent=tot>0?tot:'';
-  // Variance = TOTAL - Yesterday DIC
+  // Variance — manual entry (DIC)
   const ve=document.getElementById(`var-${tid}-${sc}`);
   if(ve){
-    const yest=ydicData[code];
-    if(yest===undefined||yest===null){ve.textContent='';ve.style.color='';}
-    else{
-      const vNum=tot-(yest||0);
-      ve.textContent=vNum===0?'0':(vNum>0?'+'+vNum:vNum);
-      ve.style.color=vNum<0?'#f87171':vNum>0?'#4ade80':'var(--muted)';
-    }
+    const varVal=c.var;
+    if(varVal===undefined||varVal===''||varVal===null){ve.textContent='';ve.style.color='';}
+    else if(Number(varVal)<0){ve.textContent=varVal;ve.style.color='#f87171';}
+    else{ve.textContent='+'+varVal;ve.style.color='#4ade80';}
   }
 }
 
@@ -1985,6 +2008,123 @@ function saveSalesPDF(){
     status.textContent='✓ Sales PDF saved';
   }catch(e){ status.textContent='PDF Error: '+e.message; console.error(e); }
 }
+// ── COUNT TAB ─────────────────────────────────────────────────
+const countCounts = {cake:{}, bread:{}, polv:{}};
+
+function buildCountTable(tid, products, days, colorDays){
+  const base = tid.replace('cnt-','');
+  const thead = document.getElementById(tid+'-thead');
+  const tbody  = document.getElementById(tid+'-tbody');
+  if(!thead||!tbody) return;
+  let th = `<tr><th style="text-align:left;white-space:nowrap">Product</th>`;
+  th += `<th class="th-adq" style="width:28px">ADQ</th><th class="th-adq" style="width:28px">MIN</th><th class="th-adq" style="width:28px">MAX</th>`;
+  days.forEach(day=>{
+    const dt = addDays(TODAY, day.offset);
+    const cls = colorDays ? dowClass(dayColor(day.key)) : '';
+    th += `<th class="day-header ${cls}">${day.label}<br><span style="font-weight:400;font-size:.56rem">${fmtShort(dt)}</span></th>`;
+  });
+  th += `<th>Variance</th><th class="th-total">TOTAL</th>`;
+  th += `<th class="th-del1">Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,1))}</span></th>`;
+  th += `<th class="th-del2">Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,2))}</span></th></tr>`;
+  thead.innerHTML = th;
+  let html = '';
+  products.forEach(p=>{
+    if(p.group){html+=`<tr class="group-row"><td colspan="12">${p.group}</td></tr>`;return;}
+    if(p.pack) return;
+    if(!countCounts[base][p.code]) countCounts[base][p.code]={};
+    const c = countCounts[base][p.code];
+    const {adq,min,max} = getADQ(p.code);
+    const sc = safeCode(p.code);
+    const tot = ['d1','d2','d3','d4'].reduce((s,k)=>s+(Number(c[k])||0),0);
+    const yest = ydicData[p.code];
+    const vNum = yest!==undefined ? tot-yest : null;
+    const vTxt = vNum===null?'':(vNum===0?'0':(vNum>0?'+'+vNum:String(vNum)));
+    const vCol = vNum===null?'':(vNum<0?'#f87171':vNum>0?'#4ade80':'var(--muted)');
+    const pcode = p.code.replace(/'/g,"\\'");
+    html+=`<tr id="crow-${sc}">
+      <td class="product-name" style="white-space:nowrap;padding-left:6px!important" onclick="openCountModal('${base}','${pcode}')">${p.code}</td>
+      <td class="adq-cell">${adq?adq.toFixed(1):''}</td>
+      <td class="min-cell">${min?min.toFixed(1):''}</td>
+      <td class="max-cell">${max?max.toFixed(1):''}</td>`;
+    ['d1','d2','d3','d4'].forEach(key=>{
+      const val=c[key]!==undefined&&c[key]!==''?c[key]:'';
+      html+=`<td class="count-cell${val!==''&&Number(val)?' has-value':''}" id="ccell-${sc}-${key}"
+        onclick="tapCountCell('${base}','${pcode}','${key}',this)"
+        style="cursor:pointer;min-width:28px">${val}</td>`;
+    });
+    html+=`<td class="var-cell" id="cvar-${sc}" style="color:${vCol}">${vTxt}</td>
+      <td class="total-cell" id="ctot-${sc}">${tot||''}</td>
+      <td class="del-cell">${delData.del1[p.code]||''}</td>
+      <td class="del-cell2">${delData.del2[p.code]||''}</td></tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+function tapCountCell(base, code, key, td){
+  if(td.querySelector('input')) return;
+  const sc = safeCode(code);
+  const cur = (countCounts[base]?.[code]||{})[key];
+  const prev = td.textContent;
+  td.innerHTML = `<input type="number" min="0" style="width:100%;background:transparent;border:none;border-bottom:2px solid var(--accent2);color:var(--text);font-size:.85rem;font-weight:700;text-align:center;outline:none;-moz-appearance:textfield;" value="${cur||''}" placeholder="0"/>`;
+  const inp = td.querySelector('input');
+  inp.focus(); inp.select();
+  const save = ()=>{
+    const v = inp.value;
+    if(!countCounts[base][code]) countCounts[base][code]={};
+    countCounts[base][code][key] = v===''?'':Number(v);
+    td.textContent = v===''?'':Number(v);
+    td.className = 'count-cell'+(v&&Number(v)?' has-value':'');
+    td.style.cursor='pointer';
+    updateCountRow(base,code);
+  };
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); save(); }
+    if(e.key==='Escape'){ td.textContent=prev; td.style.cursor='pointer'; }
+  });
+}
+
+function updateCountRow(base, code){
+  const c = (countCounts[base]||{})[code]||{};
+  const sc = safeCode(code);
+  const tot = ['d1','d2','d3','d4'].reduce((s,k)=>s+(Number(c[k])||0),0);
+  const te = document.getElementById(`ctot-${sc}`); if(te) te.textContent=tot>0?tot:'';
+  const yest=ydicData[code]; const vNum=yest!==undefined?tot-yest:null;
+  const ve=document.getElementById(`cvar-${sc}`);
+  if(ve){ ve.textContent=vNum===null?'':(vNum===0?'0':(vNum>0?'+'+vNum:String(vNum))); ve.style.color=vNum===null?'':(vNum<0?'#f87171':vNum>0?'#4ade80':'var(--muted)'); }
+}
+
+function openCountModal(base, code){
+  const c=(countCounts[base]||{})[code]||{};
+  const sc=safeCode(code);
+  const keys=['d1','d2','d3','d4'];
+  const labels={d1:'Day 1',d2:'Day 2',d3:'Day 3',d4:'Day 4'};
+  document.getElementById('modal-title').textContent=code+' (Count)';
+  document.getElementById('modal-fields').innerHTML=keys.map(k=>`
+    <div class="day-input-row"><div class="day-input-label">${labels[k]}</div>
+    <input type="number" class="day-input" id="cmi-${k}" value="${c[k]||''}" min="0" placeholder="0"/></div>`).join('');
+  document.getElementById('modal-save').onclick=()=>{
+    if(!countCounts[base][code]) countCounts[base][code]={};
+    keys.forEach(k=>{
+      const v=document.getElementById('cmi-'+k).value;
+      countCounts[base][code][k]=v===''?'':Number(v);
+      const cell=document.getElementById(`ccell-${sc}-${k}`);
+      if(cell){cell.textContent=v===''?'':Number(v);cell.className='count-cell'+(v&&Number(v)?' has-value':'');}
+    });
+    updateCountRow(base,code);
+    document.getElementById('modal-overlay').style.display='none';
+  };
+  document.getElementById('modal-overlay').style.display='flex';
+  document.querySelector('#modal-fields .day-input')?.focus();
+}
+
+function refreshCountVariances(){
+  ['cake','bread','polv'].forEach(base=>{
+    const prods=base==='cake'?CAKE_PRODUCTS:base==='bread'?BREAD_PRODUCTS:POLV_PRODUCTS;
+    prods.filter(p=>p.code&&!p.pack).forEach(p=>updateCountRow(base,p.code));
+  });
+}
+
 // ── THEME TOGGLE ─────────────────────────────────────────────
 let currentTheme = localStorage.getItem('rr_theme') || 'dark';
 function applyTheme(t){
@@ -2074,12 +2214,15 @@ async function loadYDIC(input){
       fullText+=content.items.map(i=>i.str).join(' ')+'\n';
     }
     const matched=[],unmatched=[];
-    const lineRe=/0{6}\d{12}\s+([A-Z][A-Z0-9,.\- \/()]+?)\s+(\d+\.\d{4})\s+(?:PC|PAC|BOX|SET|BOT|SLC|G)\b/g;
+    const lineRe=/0{6}\d{12}\s+([A-Z][A-Z0-9,.\- \/()]+?)\s+(\d+\.\d{4})\s+(?:PC|PAC|BOX|SET|BOT|SLC|G)\b\s+(-?\d[\d,]*\.?\d*)/g;
     const combined=fullText.split(/\n/).join(' ');
     let m;
     while((m=lineRe.exec(combined))!==null){
       const rawName=m[1].trim();
-      const qty=parseFloat(m[2]);
+      const mainQty=parseFloat(m[2]);
+      const qtyVar=parseFloat(m[3].replace(/,/g,''));
+      // Use main qty if non-zero, otherwise use absolute value of variance
+      const qty = mainQty!==0 ? mainQty : (qtyVar!==0 ? Math.abs(qtyVar) : 0);
       if(qty===0) continue;
       const lower=rawName.toLowerCase().replace(/,/g,' ').replace(/\u00a0/g,' ').replace(/\u2013/g,'-').replace(/\u2014/g,'-').replace(/\s+/g,' ');
       let found=null;
@@ -2097,6 +2240,7 @@ async function loadYDIC(input){
     document.getElementById('ydic-result').style.display='block';
     document.getElementById('ydic-status').textContent=`✓ PDF parsed — ${matched.length} matched`;
     renderYDICTable();
+    refreshCountVariances();
     // Refresh Variance column across DIC tables
     ['cake','bread','polv'].forEach(tid=>{
       Object.keys(counts[tid]||{}).forEach(code=>updateRow(tid,code));
