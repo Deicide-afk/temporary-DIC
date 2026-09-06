@@ -833,13 +833,14 @@ function switchMain(main){
 function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  // update sub-btn highlight if it's a DIC sub
   if(DIC_SUBS.includes(name)){
     DIC_SUBS.forEach(s=>{
       const b=document.getElementById('sub-btn-'+s);
       if(b) b.classList.toggle('active',s===name);
     });
   }
+  // Refresh Count variances whenever Count tab is opened
+  if(name==='count') refreshCountVariances();
 }
 
 // ── INIT ─────────────────────────────────────────────────────
@@ -2088,10 +2089,16 @@ function updateCountRow(base, code){
   const c = (countCounts[base]||{})[code]||{};
   const sc = safeCode(code);
   const tot = ['d1','d2','d3','d4'].reduce((s,k)=>s+(Number(c[k])||0),0);
-  const te = document.getElementById(`ctot-${sc}`); if(te) te.textContent=tot>0?tot:'';
-  const yest=ydicData[code]; const vNum=yest!==undefined?tot-yest:null;
-  const ve=document.getElementById(`cvar-${sc}`);
-  if(ve){ ve.textContent=vNum===null?'':(vNum===0?'0':(vNum>0?'+'+vNum:String(vNum))); ve.style.color=vNum===null?'':(vNum<0?'#f87171':vNum>0?'#4ade80':'var(--muted)'); }
+  const te = document.getElementById(`ctot-${sc}`);
+  if(te) te.textContent = tot>0 ? tot : '';
+  // Variance = TOTAL - Yesterday  (negative = still short, positive = over)
+  const yest = ydicData[code];
+  const ve = document.getElementById(`cvar-${sc}`);
+  if(!ve) return;
+  if(yest===undefined){ ve.textContent=''; ve.style.color=''; return; }
+  const vNum = tot - yest;
+  ve.textContent = vNum===0 ? '0' : (vNum>0 ? '+'+vNum : String(Math.round(vNum*100)/100));
+  ve.style.color = vNum<0 ? '#f87171' : vNum>0 ? '#4ade80' : 'var(--muted)';
 }
 
 function openCountModal(base, code){
