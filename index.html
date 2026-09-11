@@ -2031,7 +2031,7 @@ function buildCountTable(tid, products, days, colorDays){
   let html = '';
   products.forEach(p=>{
     if(p.group){html+=`<tr class="group-row"><td colspan="12">${p.group}</td></tr>`;return;}
-    if(p.pack) return;
+    // Include pack rows in Count tab
     if(!countCounts[base][p.code]) countCounts[base][p.code]={};
     const c = countCounts[base][p.code];
     const {adq,min,max} = getADQ(p.code);
@@ -2042,15 +2042,19 @@ function buildCountTable(tid, products, days, colorDays){
     const vTxt = vNum===null?'':(vNum===0?'0':(vNum>0?'+'+vNum:String(vNum)));
     const vCol = vNum===null?'':(vNum<0?'#f87171':vNum>0?'#4ade80':'var(--muted)');
     const pcode = p.code.replace(/'/g,"\\'");
-    html+=`<tr id="crow-${sc}">
-      <td class="product-name" style="white-space:nowrap;padding-left:6px!important" onclick="openCountModal('${base}','${pcode}')">${p.code}</td>
+    const isPack = !!p.pack;
+    const nameLabel = isPack ? `↳ ${p.code} <span style="font-size:.55rem;opacity:.6">×${p.mult}</span>` : p.code;
+    const nameCls = isPack ? 'style="white-space:nowrap;padding-left:18px!important;font-size:.65rem;color:var(--accent2)"' : 'style="white-space:nowrap;padding-left:6px!important"';
+    const rowBg = isPack ? 'style="background:rgba(245,166,35,.04)"' : '';
+    html+=`<tr id="crow-${sc}" ${rowBg}>
+      <td class="product-name" ${nameCls} onclick="openCountModal('${base}','${pcode}')">${nameLabel}</td>
       <td class="adq-cell">${adq?adq.toFixed(1):''}</td>
       <td class="min-cell">${min?min.toFixed(1):''}</td>
       <td class="max-cell">${max?max.toFixed(1):''}</td>`;
     ['d1','d2','d3','d4'].forEach(key=>{
       const val=c[key]!==undefined&&c[key]!==''?c[key]:'';
       html+=`<td class="count-cell${val!==''&&Number(val)?' has-value':''}" id="ccell-${sc}-${key}"
-        onclick="tapCountCell('${base}','${pcode}','${key}',this)"
+        onclick="openCountModal('${base}','${pcode}')"
         style="cursor:pointer;min-width:28px">${val}</td>`;
     });
     html+=`<td class="var-cell" id="cvar-${sc}" style="color:${vCol}">${vTxt}</td>
@@ -2086,18 +2090,20 @@ function tapCountCell(base, code, key, td){
 }
 
 function updateCountRow(base, code){
-  const c = (countCounts[base]||{})[code]||{};
+  if(!countCounts[base]) return;
+  if(!countCounts[base][code]) countCounts[base][code]={};
+  const c = countCounts[base][code];
   const sc = safeCode(code);
   const tot = ['d1','d2','d3','d4'].reduce((s,k)=>s+(Number(c[k])||0),0);
-  const te = document.getElementById(`ctot-${sc}`);
-  if(te) te.textContent = tot>0 ? tot : '';
-  // Variance = TOTAL - Yesterday  (negative = still short, positive = over)
+  console.log('[Count]',base,code,'tot='+tot,'yest='+ydicData[code]);
+  const te = document.getElementById('ctot-'+sc);
+  if(te) te.textContent = tot > 0 ? tot : '';
   const yest = ydicData[code];
-  const ve = document.getElementById(`cvar-${sc}`);
-  if(!ve) return;
+  const ve = document.getElementById('cvar-'+sc);
+  if(!ve){ console.warn('[Count] missing element: cvar-'+sc); return; }
   if(yest===undefined){ ve.textContent=''; ve.style.color=''; return; }
-  const vNum = tot - yest;
-  ve.textContent = vNum===0 ? '0' : (vNum>0 ? '+'+vNum : String(Math.round(vNum*100)/100));
+  const vNum = Math.round((tot - yest)*100)/100;
+  ve.textContent = vNum===0 ? '0' : (vNum>0 ? '+'+vNum : String(vNum));
   ve.style.color = vNum<0 ? '#f87171' : vNum>0 ? '#4ade80' : 'var(--muted)';
 }
 
@@ -2109,26 +2115,32 @@ function openCountModal(base, code){
   document.getElementById('modal-title').textContent=code+' (Count)';
   document.getElementById('modal-fields').innerHTML=keys.map(k=>`
     <div class="day-input-row"><div class="day-input-label">${labels[k]}</div>
-    <input type="number" class="day-input" id="cmi-${k}" value="${c[k]||''}" min="0" placeholder="0"/></div>`).join('');
+    <input type="number" class="day-input" id="cmi-${k}" value="${(countCounts[base]?.[code]?.[k])||''}" min="0" placeholder="0"/></div>`).join('');
   document.getElementById('modal-save').onclick=()=>{
     if(!countCounts[base][code]) countCounts[base][code]={};
     keys.forEach(k=>{
-      const v=document.getElementById('cmi-'+k).value;
-      countCounts[base][code][k]=v===''?'':Number(v);
+      const el=document.getElementById('cmi-'+k);
+      if(!el) return;
+      const v=el.value.trim();
+      const num=v===''?'':Number(v);
+      countCounts[base][code][k]=num;
       const cell=document.getElementById(`ccell-${sc}-${k}`);
-      if(cell){cell.textContent=v===''?'':Number(v);cell.className='count-cell'+(v&&Number(v)?' has-value':'');}
+      if(cell){
+        cell.textContent=num===''?'':num;
+        cell.className='count-cell'+(num!==''&&num!==0?' has-value':'');
+      }
     });
     updateCountRow(base,code);
     document.getElementById('modal-overlay').style.display='none';
   };
   document.getElementById('modal-overlay').style.display='flex';
-  document.querySelector('#modal-fields .day-input')?.focus();
+  setTimeout(()=>document.querySelector('#modal-fields .day-input')?.focus(),100);
 }
 
 function refreshCountVariances(){
   ['cake','bread','polv'].forEach(base=>{
     const prods=base==='cake'?CAKE_PRODUCTS:base==='bread'?BREAD_PRODUCTS:POLV_PRODUCTS;
-    prods.filter(p=>p.code&&!p.pack).forEach(p=>updateCountRow(base,p.code));
+    prods.filter(p=>p.code).forEach(p=>updateCountRow(base,p.code));
   });
 }
 
@@ -2248,6 +2260,7 @@ async function loadYDIC(input){
     document.getElementById('ydic-status').textContent=`✓ PDF parsed — ${matched.length} matched`;
     renderYDICTable();
     refreshCountVariances();
+    console.log('[YDIC] ydicData after PDF parse:', Object.keys(ydicData).length, 'products', ydicData);
     // Refresh Variance column across DIC tables
     ['cake','bread','polv'].forEach(tid=>{
       Object.keys(counts[tid]||{}).forEach(code=>updateRow(tid,code));
