@@ -1046,6 +1046,8 @@ function updateRow(tid,code){
     else if(Number(varVal)<0){ve.textContent=varVal;ve.style.color='#f87171';}
     else{ve.textContent='+'+varVal;ve.style.color='#4ade80';}
   }
+  // Mirror to Count tab
+  updateCountRow(tid, code);
 }
 
 // ── SOLD TABLE ───────────────────────────────────────────────
@@ -2024,7 +2026,7 @@ function buildCountTable(tid, products, days, colorDays){
     const cls = colorDays ? dowClass(dayColor(day.key)) : '';
     th += `<th class="day-header ${cls}">${day.label}<br><span style="font-weight:400;font-size:.56rem">${fmtShort(dt)}</span></th>`;
   });
-  th += `<th>Variance</th><th class="th-total">TOTAL</th>`;
+  th += `<th style="background:#1a3a5c;color:#93c5fd;min-width:36px">Yesterday</th><th>Variance</th><th class="th-total">TOTAL</th>`;
   th += `<th class="th-del1">Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,1))}</span></th>`;
   th += `<th class="th-del2">Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,2))}</span></th></tr>`;
   thead.innerHTML = th;
@@ -2053,12 +2055,17 @@ function buildCountTable(tid, products, days, colorDays){
       <td class="max-cell">${max?max.toFixed(1):''}</td>`;
     ['d1','d2','d3','d4'].forEach(key=>{
       const val=c[key]!==undefined&&c[key]!==''?c[key]:'';
-      html+=`<td class="count-cell${val!==''&&Number(val)?' has-value':''}" id="ccell-${sc}-${key}"
-        onclick="openCountModal('${base}','${pcode}')"
-        style="cursor:pointer;min-width:28px">${val}</td>`;
+      html+=`<td class="count-cell${val!==''&&Number(val)?' has-value':''}" id="ccell-${sc}-${key}" style="min-width:28px">${val}</td>`;
     });
-    html+=`<td class="var-cell" id="cvar-${sc}" style="color:${vCol}">${vTxt}</td>
-      <td class="total-cell" id="ctot-${sc}">${tot||''}</td>
+    // Yesterday from PDF + auto Variance
+    const yestV=ydicData[p.code];
+    const dicTot2=['d1','d2','d3','d4'].reduce((s,k)=>s+(Number(c[k])||0),0);
+    const aVNum=yestV!==undefined?Math.round((dicTot2-yestV)*100)/100:null;
+    const aVTxt=aVNum===null?'':(aVNum===0?'0':(aVNum>0?'+'+aVNum:String(aVNum)));
+    const aVCol=aVNum===null?'':(aVNum<0?'#f87171':aVNum>0?'#4ade80':'var(--muted)');
+    html+=`<td style="text-align:center;font-size:.78rem;color:#93c5fd" id="cyst-${sc}">${yestV!==undefined?yestV:''}</td>
+      <td class="var-cell" id="cvar-${sc}" style="color:${aVCol}">${aVTxt}</td>
+      <td class="total-cell" id="ctot-${sc}">${dicTot2||''}</td>
       <td class="del-cell">${delData.del1[p.code]||''}</td>
       <td class="del-cell2">${delData.del2[p.code]||''}</td></tr>`;
   });
@@ -2090,17 +2097,34 @@ function tapCountCell(base, code, key, td){
 }
 
 function updateCountRow(base, code){
-  if(!countCounts[base]) return;
-  if(!countCounts[base][code]) countCounts[base][code]={};
-  const c = countCounts[base][code];
   const sc = safeCode(code);
-  const tot = ['d1','d2','d3','d4'].reduce((s,k)=>s+(Number(c[k])||0),0);
-  console.log('[Count]',base,code,'tot='+tot,'yest='+ydicData[code]);
+  // Pull DIC day values (d1-d4, no LA for Count)
+  const c = (counts[base]||{})[code]||{};
+  const dicKeys = ['d1','d2','d3','d4'];
+  const tot = dicKeys.reduce((s,k)=>s+(Number(c[k])||0),0);
+
+  // Mirror DIC day values into Count cells
+  dicKeys.forEach(key=>{
+    const cell = document.getElementById('ccell-'+sc+'-'+key);
+    if(cell){
+      const v = c[key]!==undefined&&c[key]!=='' ? c[key] : '';
+      cell.textContent = v;
+      cell.className = 'count-cell'+(v!==''&&Number(v)?' has-value':'');
+    }
+  });
+
+  // Update Count total
   const te = document.getElementById('ctot-'+sc);
-  if(te) te.textContent = tot > 0 ? tot : '';
+  if(te) te.textContent = tot>0 ? tot : '';
+
+  // Update Yesterday cell
   const yest = ydicData[code];
+  const ye = document.getElementById('cyst-'+sc);
+  if(ye) ye.textContent = yest!==undefined ? yest : '';
+
+  // Variance = DIC Total - Yesterday
   const ve = document.getElementById('cvar-'+sc);
-  if(!ve){ console.warn('[Count] missing element: cvar-'+sc); return; }
+  if(!ve){ return; }
   if(yest===undefined){ ve.textContent=''; ve.style.color=''; return; }
   const vNum = Math.round((tot - yest)*100)/100;
   ve.textContent = vNum===0 ? '0' : (vNum>0 ? '+'+vNum : String(vNum));
