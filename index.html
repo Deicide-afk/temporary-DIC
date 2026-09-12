@@ -510,7 +510,7 @@ const BREAD_DAYS = [
   {key:'d2',label:'Day 2',offset:5},
   {key:'d3',label:'Day 3',offset:4},
   {key:'d4',label:'Day 4',offset:3},
-  {key:'la',label:'LA',  offset:0},
+  {key:'la',label:'LA',  offset:2},
 ];
 
 // ── PRODUCT LISTS ─────────────────────────────────────────────
@@ -1211,11 +1211,31 @@ function savePackModal(){
   targets.forEach((tcode,i)=>{
     const tm=targetMult[i]||1;
     if(!counts[tid][tcode])counts[tid][tcode]={};
-    // Recalculate target total including all pack contributions
+    // Recalculate DIC target total
     recalcWithPacks(tid,tcode);
+    // Recalculate Count Variance for this target
+    updateCountRow(tid,tcode);
   });
   document.querySelector('.btn-save').onclick=saveModal;
   closeModal();
+}
+
+function getCountTotal(base, tcode){
+  // d1-d4 sum from direct entry (no LA for Count)
+  const bc=counts[base]?.[tcode]||{};
+  let tot=['d1','d2','d3','d4'].reduce((s,k)=>s+(Number(bc[k])||0),0);
+  // Add pack contributions (d1-d4 only)
+  const prods=base==='cake'?CAKE_PRODUCTS:base==='bread'?BREAD_PRODUCTS:POLV_PRODUCTS;
+  prods.forEach(p=>{
+    if(!p.pack)return;
+    const idx=(p.targets||[]).indexOf(tcode);
+    if(idx<0)return;
+    const tm=p.targetMult[idx]||1;
+    const pc=counts[base]?.[p.code]||{};
+    const psum=['d1','d2','d3','d4'].reduce((s,k)=>s+(Number(pc[k])||0),0);
+    tot+=psum*p.mult*tm;
+  });
+  return tot;
 }
 
 function recalcWithPacks(tid,tcode){
@@ -2059,7 +2079,7 @@ function buildCountTable(tid, products, days, colorDays){
     });
     // Yesterday from PDF + auto Variance
     const yestV=ydicData[p.code];
-    const dicTot2=['d1','d2','d3','d4'].reduce((s,k)=>s+(Number(c[k])||0),0);
+    const dicTot2=getCountTotal(base, p.code);
     const aVNum=yestV!==undefined?Math.round((dicTot2-yestV)*100)/100:null;
     const aVTxt=aVNum===null?'':(aVNum===0?'0':(aVNum>0?'+'+aVNum:String(aVNum)));
     const aVCol=aVNum===null?'':(aVNum<0?'#f87171':aVNum>0?'#4ade80':'var(--muted)');
@@ -2098,10 +2118,10 @@ function tapCountCell(base, code, key, td){
 
 function updateCountRow(base, code){
   const sc = safeCode(code);
-  // Pull DIC day values (d1-d4, no LA for Count)
   const c = (counts[base]||{})[code]||{};
   const dicKeys = ['d1','d2','d3','d4'];
-  const tot = dicKeys.reduce((s,k)=>s+(Number(c[k])||0),0);
+  // Use pack-aware total (includes BM 5, BM 10 contributions etc.)
+  const tot = getCountTotal(base, code);
 
   // Mirror DIC day values into Count cells
   dicKeys.forEach(key=>{
