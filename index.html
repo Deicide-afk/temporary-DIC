@@ -79,6 +79,8 @@ table.dic-table tr:nth-child(even) td{background:var(--row-even);}
 .adq-cell{background:var(--col-adq-bg)!important;color:var(--col-adq-text);font-weight:700;}
 .min-cell{background:var(--col-adq-bg)!important;color:var(--col-adq-text);font-weight:600;opacity:.85;}
 .max-cell{background:var(--col-adq-bg)!important;color:var(--col-adq-text);font-weight:600;opacity:.7;}
+.mtdvar-cell{text-align:center;font-weight:700;font-size:.8rem;min-width:38px;}
+[data-theme="light"] .mtdvar-cell{font-size:.8rem;}
 .th-adq{background:var(--col-adq-bg)!important;color:var(--col-adq-text)!important;}
 .th-total{background:var(--col-total-bg)!important;color:var(--col-total-text)!important;}
 .del-cell{background:var(--col-del1-bg)!important;color:var(--col-del1-text);}
@@ -204,6 +206,7 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
     <button class="sub-btn" id="sub-btn-prodsold" onclick="switchTab('prodsold')">Product Sold</button>
     <button class="sub-btn" id="sub-btn-delivery" onclick="switchTab('delivery')">Delivery</button>
     <button class="sub-btn" id="sub-btn-dicsold" onclick="switchTab('dicsold')">DIC Sold</button>
+    <button class="sub-btn" id="sub-btn-mtdvar" onclick="switchTab('mtdvar')">MTD Var</button>
     <button class="sub-btn" id="sub-btn-ydic" onclick="switchTab('ydic')">Yesterday's DIC</button>
   </div>
 
@@ -348,6 +351,37 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
       <table class="dic-table"><thead id="bread-sold-thead"></thead><tbody id="bread-sold-tbody"></tbody></table>
       <div class="section-label" style="margin-top:16px">🍬 Polvoron</div>
       <table class="dic-table"><thead id="polv-sold-thead"></thead><tbody id="polv-sold-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- MTD VAR TAB -->
+  <div id="tab-mtdvar" class="tab-content">
+    <div class="dic-container">
+      <div class="section-label" style="padding-left:0;margin-bottom:8px">MTD Variance Report</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:12px;line-height:1.6">
+        Upload the Variance Report PDF — positive and negative values will be mapped to each product's MTD Var column in DIC. Uploading a new file replaces previous values.
+      </div>
+      <label for="mtdvar-file" style="display:flex;align-items:center;gap:10px;border:2px dashed var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:border-color .2s;margin-bottom:12px">
+        <span style="font-size:1.6rem">📊</span>
+        <div>
+          <div style="font-size:.78rem;font-weight:700;color:var(--accent2)">Upload Variance Report PDF</div>
+          <div style="font-size:.66rem;color:var(--muted)" id="mtdvar-fname">No file chosen</div>
+        </div>
+        <input type="file" id="mtdvar-file" accept=".pdf,.PDF,application/pdf" style="display:none" onchange="loadMTDVar(this)"/>
+      </label>
+      <div id="mtdvar-status" style="font-size:.75rem;color:var(--muted);min-height:18px;margin-bottom:8px"></div>
+      <div id="mtdvar-result" style="display:none">
+        <div style="font-size:.68rem;color:var(--muted);margin-bottom:6px" id="mtdvar-summary"></div>
+        <table class="dic-table" style="width:100%">
+          <thead><tr style="background:var(--card)">
+            <th style="text-align:left">Product</th>
+            <th style="width:70px">MTD Var</th>
+            <th style="width:50px;font-size:.6rem;color:var(--muted)">DIC Code</th>
+          </tr></thead>
+          <tbody id="mtdvar-tbody"></tbody>
+        </table>
+        <div id="mtdvar-unmatched" style="margin-top:8px;font-size:.68rem;color:var(--muted)"></div>
+      </div>
     </div>
   </div>
 
@@ -812,7 +846,7 @@ function checkPw(){
 document.getElementById('pw-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkPw();});
 
 // ── TAB SWITCH ───────────────────────────────────────────────
-const DIC_SUBS=['dic','count','prodsold','delivery','dicsold','ydic'];
+const DIC_SUBS=['dic','count','prodsold','delivery','dicsold','mtdvar','ydic'];
 function switchMain(main){
   ['dic','sales','print'].forEach(m=>{
     document.getElementById('main-btn-'+m).classList.toggle('active',m===main);
@@ -891,7 +925,7 @@ function buildTable(tid,products,days,colorDays){
     const cls=colorDays?dowClass(colorDt):'';
     th+=`<th class="day-header ${cls}">${day.label}<br><span style="font-weight:400;font-size:.56rem">${fmtShort(dt)}</span></th>`;
   });
-  th+=`<th>Variance</th><th class="th-total">TOTAL</th><th class="th-del1">Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,1))}</span></th><th class="th-del2">Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,2))}</span></th><th class="th-del3">Forecast<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,3))}</span></th></tr>`;
+  th+=`<th>Variance</th><th style="background:#1a2a3a;color:#f5a623;min-width:38px;font-size:.62rem">MTD<br>Var</th><th class="th-total">TOTAL</th><th class="th-del1">Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,1))}</span></th><th class="th-del2">Del<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,2))}</span></th><th class="th-del3">Forecast<br><span style="font-weight:400;font-size:.55rem">${fmtShort(addDays(TODAY,3))}</span></th></tr>`;
   thead.innerHTML=th;
   let html='';
   products.forEach(p=>{
@@ -911,6 +945,7 @@ function buildTable(tid,products,days,colorDays){
       });
       const tot=['d1','d2','d3','d4','la'].reduce((s,k)=>s+(Number(c[k])||0)*p.mult,0);
       html+=`<td class="var-cell" id="var-${tid}-${sc}"></td>
+        <td class="mtdvar-cell" id="mtdv-${tid}-${sc}"></td>
         <td class="total-cell" id="tot-${tid}-${sc}" style="font-size:.65rem">${tot||''}</td>
         <td colspan="3"></td></tr>`;
       return;
@@ -930,7 +965,11 @@ function buildTable(tid,products,days,colorDays){
       html+=`<td class="count-cell${val!==''&&val!==0?' has-value':''}" id="cell-${tid}-${sc}-${key}">${val}</td>`;
     });
     const tot=['d1','d2','d3','d4','la'].reduce((s,k)=>s+(Number(c[k])||0),0);
+    const _mv=mtdVarData[p.code];
+    const _mvTxt=_mv!==undefined?(_mv>0?'+'+_mv:String(_mv)):'';
+    const _mvCol=_mv===undefined?'':(_mv<0?'#f87171':_mv>0?'#4ade80':'var(--muted)');
     html+=`<td class="var-cell" id="var-${tid}-${sc}">${c.var||''}</td>
+      <td class="mtdvar-cell" id="mtdv-${tid}-${sc}" style="color:${_mvCol}">${_mvTxt}</td>
       <td class="total-cell" id="tot-${tid}-${sc}">${tot||''}</td>
       <td class="del-cell" id="del1-${tid}-${sc}">${delData.del1[p.code]||''}</td>
       <td class="del-cell2" id="del2-${tid}-${sc}">${delData.del2[p.code]||''}</td>
@@ -2186,6 +2225,93 @@ function refreshCountVariances(){
     const prods=base==='cake'?CAKE_PRODUCTS:base==='bread'?BREAD_PRODUCTS:POLV_PRODUCTS;
     prods.filter(p=>p.code).forEach(p=>updateCountRow(base,p.code));
   });
+}
+
+// ── MTD VARIANCE REPORT ──────────────────────────────────────
+let mtdVarData = {};
+
+function updateMTDVarCell(code){
+  const v = mtdVarData[code];
+  const txt = v===undefined ? '' : (v>0?'+'+v : v===0?'0':String(v));
+  const col = v===undefined ? '' : (v<0?'#f87171':v>0?'#4ade80':'var(--muted)');
+  ['cake','bread','polv'].forEach(tid=>{
+    const sc = safeCode(code);
+    const el = document.getElementById(`mtdv-${tid}-${sc}`);
+    if(el){ el.textContent=txt; el.style.color=col; }
+  });
+}
+
+async function loadMTDVar(input){
+  const file = input.files[0];
+  if(!file) return;
+  document.getElementById('mtdvar-fname').textContent = file.name;
+  document.getElementById('mtdvar-status').textContent = 'Reading PDF…';
+  document.getElementById('mtdvar-result').style.display = 'none';
+  mtdVarData = {}; // replace old values
+
+  try {
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+    const pdf = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+    let fullText = '';
+    for(let p=1; p<=pdf.numPages; p++){
+      const pg = await pdf.getPage(p);
+      const ct = await pg.getTextContent();
+      fullText += ct.items.map(i=>i.str).join(' ') + '\n';
+    }
+    const combined = fullText.split(/\n/).join(' ');
+
+    // Variance Report format: [18-digit code] [NAME] [signed_qty.XXXX] [UNIT] [amt]
+    // e.g. 000000001000001472 PASTRY,ENSAI,IMPRVD,PC 9.0000 PC 194.94
+    const lineRe = /0{6}\d{12}\s+([A-Z][A-Z0-9,.\- \/()]+?)\s+(-?\d+\.\d{4})\s+(?:PC|PAC|BOX|SET|BOT|SLC|G)\b/g;
+
+    const matched = [], unmatched = [];
+    let m;
+    while((m = lineRe.exec(combined)) !== null){
+      const rawName = m[1].trim();
+      const qty = parseFloat(m[2]);
+      if(qty === 0) continue; // skip zero-variance items
+      const lower = rawName.toLowerCase()
+        .replace(/,/g,' ').replace(/\u00a0/g,' ').replace(/\u2013/g,'-')
+        .replace(/\u2014/g,'-').replace(/\s+/g,' ');
+      let found = null;
+      for(const [kw, code] of DEL_MAP){
+        const nkw = kw.toLowerCase().replace(/,/g,' ').replace(/\s+/g,' ');
+        if(lower.includes(nkw)){ found = code; break; }
+      }
+      if(found){
+        // Keep the signed value as-is (positive = surplus, negative = shortage)
+        mtdVarData[found] = Math.round(qty*100)/100;
+        if(!matched.find(x=>x.code===found)) matched.push({name:rawName, code:found, qty});
+        updateMTDVarCell(found);
+      } else {
+        if(!unmatched.find(u=>u.name===rawName)) unmatched.push({name:rawName, qty});
+      }
+    }
+
+    // Render results
+    const tbody = document.getElementById('mtdvar-tbody');
+    tbody.innerHTML = '';
+    matched.sort((a,b)=>b.qty-a.qty).forEach(r=>{
+      const tr = document.createElement('tr');
+      const col = r.qty<0?'#f87171':r.qty>0?'#4ade80':'var(--muted)';
+      tr.innerHTML = `<td style="font-size:.72rem;padding:4px 6px;text-align:left">${r.name.substring(0,40)}</td>
+        <td style="text-align:center;font-weight:700;color:${col}">${r.qty>0?'+'+r.qty:r.qty}</td>
+        <td style="text-align:center;font-size:.65rem;color:var(--accent2)">${r.code}</td>`;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('mtdvar-summary').textContent =
+      `${matched.length} matched · ${unmatched.filter(u=>u.qty!==0).length} unmatched`;
+    document.getElementById('mtdvar-unmatched').innerHTML = unmatched.length
+      ? '<b>No DIC mapping:</b><br>'+unmatched.map(u=>`${u.name.substring(0,45)} (${u.qty})`).join('<br>') : '';
+    document.getElementById('mtdvar-result').style.display = 'block';
+    document.getElementById('mtdvar-status').textContent = `✓ Loaded — ${matched.length} products updated in DIC`;
+
+  } catch(e){
+    document.getElementById('mtdvar-status').textContent = 'Error: '+e.message;
+    console.error(e);
+  }
 }
 
 // ── THEME TOGGLE ─────────────────────────────────────────────
