@@ -469,6 +469,11 @@ table.ps-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
         <button class="btn-screenshot" style="border-color:#27ae60;color:#27ae60;" onclick="savePDF('all')">📄&nbsp; Save All Tables (PDF)</button>
         <button class="btn-screenshot" style="border-color:#27ae60;color:#27ae60;" onclick="saveSalesPDF()">📊&nbsp; Save Sales (PDF)</button>
       </div>
+      <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px">
+        <div class="section-label" style="padding-left:0;margin-bottom:10px;color:#f87171">Danger Zone</div>
+        <button onclick="clearSavedData()" style="width:100%;padding:12px;background:transparent;border:2px solid #f87171;border-radius:10px;color:#f87171;font-size:.8rem;font-weight:700;cursor:pointer;">🗑 Clear All Saved Data</button>
+        <p style="font-size:.68rem;color:var(--muted);margin-top:8px;line-height:1.5">Clears all DIC counts, deliveries, ADQ, MTD Var, and Yesterday data from phone cache. Sales data will also be cleared.</p>
+      </div>
       <div id="screenshot-status" style="margin-top:16px;font-size:.75rem;color:var(--green);min-height:20px"></div>
     </div>
   </div>
@@ -624,6 +629,13 @@ const ADQ_MAP = [
   ['ube bloom cake junior',       'UC JR',   1],
   ['mango blossom cake junior',   'MBC JR',  1],
   ['tiramisu cloud junior',       'TCC JR',  1],
+  ['salted caramel bliss cake junior',  'SCBC JR', 1],
+  ['salted caramel bliss junior',       'SCBC JR', 1],
+  ['salted caramel bliss cake petite',  'SCBC PT', 1],
+  ['salted caramel bliss petite',       'SCBC PT', 1],
+  ['salted caramel bliss cake regular', 'SCBC REG',1],
+  ['salted caramel bliss regular',      'SCBC REG',1],
+  ['salted caramel bliss',              'SCBC',    1],
   ['cm jr-chocolate mousse',      'CM JR',   1],
   ['chocolate mousse junior',     'CM JR',   1],
   // Cakes Petite
@@ -631,7 +643,7 @@ const ADQ_MAP = [
   ['chocolate bliss petite',      'CBC PT',  1],
   ['tiramisu cloud petite',       'TCC PT',  1],
   ['mango blossom cake petite',   'MBC PT',  1],
-  ['mochaccino delight petite',   'MDLC PT', 1],
+  ['mochaccino delight petite',    1],
   ['ube bloom cake petite',       'UC PT',   1],
   ['ube bloom petite',            'UC PT',   1],
   ['caramel delight petite',      'UC PT',   0],
@@ -640,7 +652,7 @@ const ADQ_MAP = [
   ['chocolate bliss regular',     'CBC REG', 1],
   ['cm reg-chocolate mousse',     'CM REG',  1],
   ['mango blossom cake regular',  'MBC REG', 1],
-  ['mochaccino delight regular',  'MDLC REG',1],
+  ['mochaccino delight regular',  1],
   ['tiramisu cloud regular',      'TCC REG', 1],
   ['tmc reg-tiramisu',            'TCC REG', 1],
   ['ube bloom cake regular',      'UC REG',  1],
@@ -878,6 +890,47 @@ function switchTab(name){
 }
 
 // ── INIT ─────────────────────────────────────────────────────
+// ── AUTO-SAVE (localStorage) ─────────────────────────────────
+let _saveTimer=null;
+function autoSave(){
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(()=>{
+    try{
+      localStorage.setItem('rr_counts',     JSON.stringify(counts));
+      localStorage.setItem('rr_deldata',    JSON.stringify(delData));
+      localStorage.setItem('rr_countcounts',JSON.stringify(countCounts));
+      localStorage.setItem('rr_mtdvardata', JSON.stringify(mtdVarData));
+      localStorage.setItem('rr_ydicdata',   JSON.stringify(ydicData));
+      localStorage.setItem('rr_adqdata',    JSON.stringify(adqData));
+      localStorage.setItem('rr_sold',       JSON.stringify(sold));
+    }catch(e){console.warn('AutoSave error:',e);}
+  },800);
+}
+
+function loadFromStorage(){
+  try{
+    // DIC counts
+    const rc=JSON.parse(localStorage.getItem('rr_counts')||'{}');
+    ['cake','bread','polv'].forEach(t=>{if(rc[t])Object.assign(counts[t],rc[t]);});
+    // Delivery data
+    const rd=JSON.parse(localStorage.getItem('rr_deldata')||'{}');
+    ['del1','del2','del3'].forEach(s=>{if(rd[s])Object.assign(delData[s],rd[s]);});
+    // Count tab
+    const rcc=JSON.parse(localStorage.getItem('rr_countcounts')||'{}');
+    ['cake','bread','polv'].forEach(t=>{if(rcc[t])Object.assign(countCounts[t],rcc[t]);});
+    // MTD Var, Yesterday DIC, ADQ
+    const rmv=JSON.parse(localStorage.getItem('rr_mtdvardata')||'{}');
+    Object.assign(mtdVarData,rmv);
+    const ryd=JSON.parse(localStorage.getItem('rr_ydicdata')||'{}');
+    Object.assign(ydicData,ryd);
+    const ra=JSON.parse(localStorage.getItem('rr_adqdata')||'{}');
+    Object.assign(adqData,ra);
+    // Sold
+    const rs=JSON.parse(localStorage.getItem('rr_sold')||'{}');
+    ['cake','bread','polv'].forEach(t=>{if(rs[t])Object.assign(sold[t],rs[t]);});
+  }catch(e){console.warn('Load error:',e);}
+}
+
 function init(){
   const d=TODAY;
   document.getElementById('today-display').textContent=`${DAYS_SHORT[d.getDay()]} ${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
@@ -888,12 +941,15 @@ function init(){
   // Load saved ADQ
   loadADQ();
   // Build tables
+  loadFromStorage(); // restore all saved data before building tables
   buildTable('cake',CAKE_PRODUCTS,CAKE_DAYS,true);
   buildTable('bread',BREAD_PRODUCTS,BREAD_DAYS,false);
   buildTable('polv',POLV_PRODUCTS,BREAD_DAYS,false);
   buildCountTable('cnt-cake',CAKE_PRODUCTS,CAKE_COUNT_DAYS,true);
   buildCountTable('cnt-bread',BREAD_PRODUCTS,BREAD_COUNT_DAYS,false);
   buildCountTable('cnt-polv',POLV_PRODUCTS,BREAD_COUNT_DAYS,false);
+  // Recalc all pack contributions and variance colours after load
+  recalcAllPacks();
   applyTheme(currentTheme);
   buildSoldTable('cake',CAKE_PRODUCTS,CAKE_DAYS,true);
   buildSoldTable('bread',BREAD_PRODUCTS,BREAD_DAYS,false);
@@ -1057,6 +1113,7 @@ function saveModal(){
   document.querySelector('.btn-save').onclick=saveModal;
   document.getElementById('var-sign-row').style.display='none';
   closeModal();
+  autoSave();
 }
 
 function updateRow(tid,code){
@@ -1275,6 +1332,36 @@ function getCountTotal(base, tcode){
     tot+=psum*p.mult*tm;
   });
   return tot;
+}
+
+function recalcAllPacks(){
+  // After load from storage, re-apply pack contributions and update all row displays
+  ['cake','bread','polv'].forEach(tid=>{
+    const prods=tid==='cake'?CAKE_PRODUCTS:tid==='bread'?BREAD_PRODUCTS:POLV_PRODUCTS;
+    // First update all regular product rows (applies var colouring, mirrors to Count)
+    prods.forEach(p=>{
+      if(p.group||p.pack)return;
+      if(counts[tid][p.code]&&Object.keys(counts[tid][p.code]).some(k=>counts[tid][p.code][k]!==''))
+        updateRow(tid,p.code);
+    });
+    // Then recalc pack targets so pack-contributed totals are correct
+    prods.forEach(p=>{
+      if(!p.pack)return;
+      (p.targets||[]).forEach(tcode=>recalcWithPacks(tid,tcode));
+    });
+  });
+  // Update del cells with loaded delivery data
+  ['del1','del2','del3'].forEach(slot=>{
+    Object.keys(delData[slot]).forEach(code=>{
+      const sc=safeCode(code);
+      ['cake','bread','polv'].forEach(tid=>{
+        const el=document.getElementById(`${slot}-${tid}-${sc}`);
+        if(el){el.textContent=delData[slot][code];el.style.color=slot==='del3'?'#a78bfa':'#60a5fa';}
+      });
+    });
+  });
+  // Update MTD Var cells
+  Object.keys(mtdVarData).forEach(code=>updateMTDVarCell(code));
 }
 
 function recalcWithPacks(tid,tcode){
@@ -1636,6 +1723,7 @@ function extractDel(slot){
     }
   });
   document.getElementById('result-'+slot).textContent=`✓ ${matched} matched${unmatched.length?` · ${unmatched.length} unmatched`:''}`;
+  autoSave();
   // Refresh Yesterday's DIC view if it has been shown
   if(document.getElementById('ydic-result').style.display!=='none'||Object.keys(delData.del1).length||Object.keys(delData.del2).length){
     document.getElementById('ydic-result').style.display='block';
@@ -1652,6 +1740,7 @@ function loadADQ(){
 }
 
 function saveADQStorage(){
+  autoSave();
   try{localStorage.setItem('rr_adq',JSON.stringify(adqData));}catch(e){}
 }
 
@@ -2306,12 +2395,23 @@ async function loadMTDVar(input){
     document.getElementById('mtdvar-unmatched').innerHTML = unmatched.length
       ? '<b>No DIC mapping:</b><br>'+unmatched.map(u=>`${u.name.substring(0,45)} (${u.qty})`).join('<br>') : '';
     document.getElementById('mtdvar-result').style.display = 'block';
+    autoSave();
     document.getElementById('mtdvar-status').textContent = `✓ Loaded — ${matched.length} products updated in DIC`;
 
   } catch(e){
     document.getElementById('mtdvar-status').textContent = 'Error: '+e.message;
     console.error(e);
   }
+}
+
+// ── CLEAR SAVED DATA ─────────────────────────────────────────
+function clearSavedData(){
+  if(!confirm('Clear ALL saved DIC data? This cannot be undone.')) return;
+  const keys=['rr_counts','rr_deldata','rr_countcounts','rr_mtdvardata',
+               'rr_ydicdata','rr_adqdata','rr_sold','rr_sales'];
+  keys.forEach(k=>localStorage.removeItem(k));
+  alert('Cleared. Reloading…');
+  location.reload();
 }
 
 // ── THEME TOGGLE ─────────────────────────────────────────────
@@ -2430,6 +2530,7 @@ async function loadYDIC(input){
     document.getElementById('ydic-status').textContent=`✓ PDF parsed — ${matched.length} matched`;
     renderYDICTable();
     refreshCountVariances();
+    autoSave();
     console.log('[YDIC] ydicData after PDF parse:', Object.keys(ydicData).length, 'products', ydicData);
     // Refresh Variance column across DIC tables
     ['cake','bread','polv'].forEach(tid=>{
